@@ -2,6 +2,8 @@ using Microsoft.Extensions.DependencyInjection;
 using ProjectIgnite.Data;
 using ProjectIgnite.Repositories;
 using ProjectIgnite.ViewModels;
+// 移除不存在的 Interfaces 命名空间引用
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace ProjectIgnite.Services
@@ -29,9 +31,22 @@ namespace ProjectIgnite.Services
             // 注册服务层
             services.AddSingleton<IGitService, GitService>();
             services.AddSingleton<ILinguistService, LinguistService>();
+            
+            // 注册图表相关服务
+            services.AddSingleton<IDiagramService, DiagramService>();
+            services.AddSingleton<IGitHubService, GitHubService>();
+            services.AddSingleton<IAIService, AIService>();
+            
+            // 注册日志服务
+            services.AddLogging(builder => builder.AddConsole());
 
             // 注册ViewModels
             services.AddTransient<ProjectSourceViewModel>();
+            services.AddTransient<ProjectStructureViewModel>(provider => 
+                new ProjectStructureViewModel(
+                    provider.GetRequiredService<IDiagramService>(),
+                    provider.GetRequiredService<IGitHubService>(),
+                    provider.GetRequiredService<IAIService>()));
             services.AddTransient<AddProjectDialogViewModel>();
             services.AddTransient<CloneProgressViewModel>();
 

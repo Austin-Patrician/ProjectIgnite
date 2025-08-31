@@ -239,4 +239,53 @@ namespace ProjectIgnite.Converters
             throw new NotImplementedException();
         }
     }
+
+    /// <summary>
+    /// 对象到布尔值转换器
+    /// </summary>
+    public class ObjectToBooleanConverter : IValueConverter
+    {
+        public static readonly ObjectToBooleanConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            // 检查是否需要反转结果
+            bool invert = parameter?.ToString()?.Equals("Invert", StringComparison.OrdinalIgnoreCase) == true;
+            
+            bool result = value != null;
+            
+            return invert ? !result : result;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// 布尔值到字符串转换器
+    /// </summary>
+    public class BooleanToStringConverter : IValueConverter
+    {
+        public static readonly BooleanToStringConverter Instance = new();
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is bool boolValue && parameter is string parameterString)
+            {
+                var parts = parameterString.Split('|');
+                if (parts.Length == 2)
+                {
+                    return boolValue ? parts[0] : parts[1];
+                }
+            }
+            return value?.ToString() ?? string.Empty;
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

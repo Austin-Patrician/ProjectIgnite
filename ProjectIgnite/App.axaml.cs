@@ -5,6 +5,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Data.Core;
 using Avalonia.Data.Core.Plugins;
 using Avalonia.Markup.Xaml;
+
 using ProjectIgnite.ViewModels;
 using ProjectIgnite.Views;
 using ProjectIgnite.Services;
@@ -21,6 +22,7 @@ namespace ProjectIgnite
 
         public override void OnFrameworkInitializationCompleted()
         {
+            
             // 初始化依赖注入服务
             ServiceLocator.ConfigureServices();
 
