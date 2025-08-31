@@ -1,0 +1,394 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "F:\\code\\Austin\\ProjectIgnite\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\viewmodels\\projectsourceviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\viewmodels\\projectsourceviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\services\\ilinguistservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\services\\ilinguistservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\repositories\\iprojectrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\repositories\\iprojectrepository.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\fd07b780705e3b008bc9ce32db07a4d96f7f66397376ec1517651d6d9ee10c93\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\AsyncMethodBuilderCore.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Austin_Zhang\\AppData\\Local\\Temp\\.vsdbgsrc\\beb5c781818b8f6cd1b6b084d682ee41a1e7e35550fb459baa4b36c98f5c4541\\RelationalDataReader.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\views\\projectsourceview.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\views\\projectsourceview.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\47cfc97b6f86e21fa60c28f513106d0f3f129919ee3733ab92d627d97184899a\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\ConfiguredAsyncDisposable.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\viewmodels\\addprojectdialogviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\viewmodels\\addprojectdialogviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\views\\addprojectdialog.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\views\\addprojectdialog.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\views\\cloneprogressview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\views\\cloneprogressview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\services\\servicelocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\services\\servicelocator.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\views\\projectsourceview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\views\\projectsourceview.xaml.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\views\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\views\\mainwindow.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\dtos\\cloneprogress.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\dtos\\cloneprogress.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\viewmodels\\mainwindowviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\viewmodels\\cloneprogressviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\viewmodels\\cloneprogressviewmodel.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\services\\linguistservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\services\\linguistservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\converters\\projectsourceconverters.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\converters\\projectsourceconverters.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\services\\themeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\services\\themeservice.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\models\\navigationitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\models\\navigationitem.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\app.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\app.axaml||{6D5344A2-2FCD-49DE-A09D-6A14FD1B1224}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|f:\\code\\austin\\projectignite\\projectignite\\viewmodels\\viewmodelbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{331DB985-A09A-42A7-B31B-4CF6D6F02F90}|ProjectIgnite\\ProjectIgnite.csproj|solutionrelative:projectignite\\viewmodels\\viewmodelbase.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 1,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedHeight": 374,
+          "SelectedChildIndex": 9,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{34e76e81-ee4a-11d0-ae2e-00a0c90fffc3}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:128:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{eefa5220-e298-11d0-8f78-00a0c9110057}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:129:0:{1fc202d4-d401-403c-9834-5b218574bb67}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{0174dea2-fdbe-4ef1-8f99-c0beae78880f}"
+            },
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{aa2115a1-9712-457b-9047-dbb71ca2cdd2}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 4,
+              "Title": "RelationalDataReader.cs",
+              "DocumentMoniker": "C:\\Users\\Austin_Zhang\\AppData\\Local\\Temp\\.vsdbgsrc\\beb5c781818b8f6cd1b6b084d682ee41a1e7e35550fb459baa4b36c98f5c4541\\RelationalDataReader.cs",
+              "ToolTip": "C:\\Users\\Austin_Zhang\\AppData\\Local\\Temp\\.vsdbgsrc\\beb5c781818b8f6cd1b6b084d682ee41a1e7e35550fb459baa4b36c98f5c4541\\RelationalDataReader.cs [Read Only]",
+              "ViewState": "AgIAAK4AAAAAAAAAAAA2wLYAAAAFAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-31T09:44:23.683Z",
+              "EditorCaption": " [Read Only]"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "AsyncMethodBuilderCore.cs",
+              "DocumentMoniker": "C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\fd07b780705e3b008bc9ce32db07a4d96f7f66397376ec1517651d6d9ee10c93\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\AsyncMethodBuilderCore.cs",
+              "ToolTip": "C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\fd07b780705e3b008bc9ce32db07a4d96f7f66397376ec1517651d6d9ee10c93\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\AsyncMethodBuilderCore.cs",
+              "ViewState": "AgIAABgAAAAAAAAAAAArwCUAAAAQAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-31T09:41:39.578Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 6,
+              "Title": "ConfiguredAsyncDisposable.cs",
+              "DocumentMoniker": "C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\47cfc97b6f86e21fa60c28f513106d0f3f129919ee3733ab92d627d97184899a\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\ConfiguredAsyncDisposable.cs",
+              "ToolTip": "C:\\Users\\Austin_Zhang\\AppData\\Local\\SourceServer\\47cfc97b6f86e21fa60c28f513106d0f3f129919ee3733ab92d627d97184899a\\src\\libraries\\System.Private.CoreLib\\src\\System\\Runtime\\CompilerServices\\ConfiguredAsyncDisposable.cs",
+              "ViewState": "AgIAAAkAAAAwMzMzMzMswBkAAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-31T09:41:18.509Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "ProjectSourceViewModel.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\ProjectSourceViewModel.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\ViewModels\\ProjectSourceViewModel.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\ProjectSourceViewModel.cs",
+              "RelativeToolTip": "ProjectIgnite\\ViewModels\\ProjectSourceViewModel.cs",
+              "ViewState": "AgIAADcCAABQzczMzMwowEACAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:38.614Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "IProjectRepository.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Repositories\\IProjectRepository.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Repositories\\IProjectRepository.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Repositories\\IProjectRepository.cs",
+              "RelativeToolTip": "ProjectIgnite\\Repositories\\IProjectRepository.cs",
+              "ViewState": "AgIAABIAAAAAAAAAAAA4wBkAAAA0AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:37:41.139Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "ILinguistService.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ILinguistService.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Services\\ILinguistService.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ILinguistService.cs",
+              "RelativeToolTip": "ProjectIgnite\\Services\\ILinguistService.cs",
+              "ViewState": "AgIAAA8AAAAAAAAAAAA2wBcAAAAeAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:32.017Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
+              "Title": "AddProjectDialogViewModel.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\AddProjectDialogViewModel.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\ViewModels\\AddProjectDialogViewModel.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\AddProjectDialogViewModel.cs",
+              "RelativeToolTip": "ProjectIgnite\\ViewModels\\AddProjectDialogViewModel.cs",
+              "ViewState": "AgIAAEQBAADczMzMzEwwwEoBAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:37.55Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "ProjectSourceView.axaml",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\ProjectSourceView.axaml",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Views\\ProjectSourceView.axaml",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\ProjectSourceView.axaml",
+              "RelativeToolTip": "ProjectIgnite\\Views\\ProjectSourceView.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-08-31T09:26:57.794Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 11,
+              "Title": "ProjectSourceView.xaml.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\ProjectSourceView.xaml.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Views\\ProjectSourceView.xaml.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\ProjectSourceView.xaml.cs",
+              "RelativeToolTip": "ProjectIgnite\\Views\\ProjectSourceView.xaml.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAA1wA4AAAAMAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T08:24:12.075Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "CloneProgressView.xaml.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\CloneProgressView.xaml.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Views\\CloneProgressView.xaml.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\CloneProgressView.xaml.cs",
+              "RelativeToolTip": "ProjectIgnite\\Views\\CloneProgressView.xaml.cs",
+              "ViewState": "AgIAAAUAAAAAAAAAAAAowAkAAAASAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T08:24:14.93Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 13,
+              "Title": "CloneProgress.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\DTOs\\CloneProgress.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\DTOs\\CloneProgress.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\DTOs\\CloneProgress.cs",
+              "RelativeToolTip": "ProjectIgnite\\DTOs\\CloneProgress.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAA4AAAAWAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T07:50:53.7Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 12,
+              "Title": "MainWindow.axaml",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\MainWindow.axaml",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Views\\MainWindow.axaml",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\MainWindow.axaml",
+              "RelativeToolTip": "ProjectIgnite\\Views\\MainWindow.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-08-29T08:21:42.293Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 8,
+              "Title": "AddProjectDialog.xaml.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\AddProjectDialog.xaml.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Views\\AddProjectDialog.xaml.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Views\\AddProjectDialog.xaml.cs",
+              "RelativeToolTip": "ProjectIgnite\\Views\\AddProjectDialog.xaml.cs",
+              "ViewState": "AgIAAAwAAAAAAAAAAAA1wBIAAAA5AAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T08:24:09.922Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 10,
+              "Title": "ServiceLocator.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ServiceLocator.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Services\\ServiceLocator.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ServiceLocator.cs",
+              "RelativeToolTip": "ProjectIgnite\\Services\\ServiceLocator.cs",
+              "ViewState": "AgIAADUAAAAAAAAAAAAowEEAAAAwAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:34.678Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 15,
+              "Title": "CloneProgressViewModel.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\CloneProgressViewModel.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\ViewModels\\CloneProgressViewModel.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\CloneProgressViewModel.cs",
+              "RelativeToolTip": "ProjectIgnite\\ViewModels\\CloneProgressViewModel.cs",
+              "ViewState": "AgIAAFEBAAAAAAAAAAAAAG4BAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:37.127Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 16,
+              "Title": "LinguistService.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\LinguistService.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Services\\LinguistService.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\LinguistService.cs",
+              "RelativeToolTip": "ProjectIgnite\\Services\\LinguistService.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAcwA4AAAAYAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:33.638Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 14,
+              "Title": "MainWindowViewModel.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\ViewModels\\MainWindowViewModel.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\MainWindowViewModel.cs",
+              "RelativeToolTip": "ProjectIgnite\\ViewModels\\MainWindowViewModel.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwwAAAAiAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:35:36.638Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 17,
+              "Title": "ProjectSourceConverters.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Converters\\ProjectSourceConverters.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Converters\\ProjectSourceConverters.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Converters\\ProjectSourceConverters.cs",
+              "RelativeToolTip": "ProjectIgnite\\Converters\\ProjectSourceConverters.cs",
+              "ViewState": "AgIAAMwAAAAAAAAAAAAjwNgAAABXAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T06:37:51.076Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 19,
+              "Title": "NavigationItem.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Models\\NavigationItem.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Models\\NavigationItem.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Models\\NavigationItem.cs",
+              "RelativeToolTip": "ProjectIgnite\\Models\\NavigationItem.cs",
+              "ViewState": "AgIAAA4AAAAAAAAAAAAowBIAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T05:01:47.495Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 20,
+              "Title": "App.axaml",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\App.axaml",
+              "RelativeDocumentMoniker": "ProjectIgnite\\App.axaml",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\App.axaml",
+              "RelativeToolTip": "ProjectIgnite\\App.axaml",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.003549|",
+              "WhenOpened": "2025-08-29T05:00:19.631Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 18,
+              "Title": "ThemeService.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ThemeService.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\Services\\ThemeService.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\Services\\ThemeService.cs",
+              "RelativeToolTip": "ProjectIgnite\\Services\\ThemeService.cs",
+              "ViewState": "AgIAAAYAAAAAAAAAAADwvycAAAAJAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T04:54:45.625Z"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 21,
+              "Title": "ViewModelBase.cs",
+              "DocumentMoniker": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\ViewModelBase.cs",
+              "RelativeDocumentMoniker": "ProjectIgnite\\ViewModels\\ViewModelBase.cs",
+              "ToolTip": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ViewModels\\ViewModelBase.cs",
+              "RelativeToolTip": "ProjectIgnite\\ViewModels\\ViewModelBase.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAADwvwAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-08-29T04:54:29.888Z"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

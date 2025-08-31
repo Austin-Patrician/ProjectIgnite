@@ -1,0 +1,208 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="using:ProjectIgnite.ViewModels"
+        xmlns:models="using:ProjectIgnite.Models"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+        x:Class="ProjectIgnite.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Icon="/Assets/avalonia-logo.ico"
+        Title="ProjectIgnite"
+        MinWidth="800" MinHeight="600">
+
+    <Design.DataContext>
+        <vm:MainWindowViewModel/>
+    </Design.DataContext>
+
+    <Window.Styles>
+        <!-- 导航菜单项样式 -->
+        <Style Selector="ListBoxItem">
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        
+        <Style Selector="ListBoxItem:selected">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+        
+        <Style Selector="ListBoxItem:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+        </Style>
+
+        <!-- 工具栏按钮样式 -->
+        <Style Selector="Button.ToolbarButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="12,8"/>
+            <Setter Property="Margin" Value="4,0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+        
+        <Style Selector="Button.ToolbarButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlHighlightListLowBrush}"/>
+        </Style>
+
+        <!-- 日志消息样式 -->
+        <Style Selector="TextBlock.LogMessage">
+            <Setter Property="FontFamily" Value="Consolas, 'Courier New', monospace"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Margin" Value="2,1"/>
+        </Style>
+        
+        <Style Selector="TextBlock.LogMessage.Info">
+            <Setter Property="Foreground" Value="{DynamicResource SystemBaseHighColor}"/>
+        </Style>
+        
+        <Style Selector="TextBlock.LogMessage.Warning">
+            <Setter Property="Foreground" Value="Orange"/>
+        </Style>
+        
+        <Style Selector="TextBlock.LogMessage.Error">
+            <Setter Property="Foreground" Value="Red"/>
+        </Style>
+        
+        <Style Selector="TextBlock.LogMessage.Debug">
+            <Setter Property="Foreground" Value="Gray"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 顶部工具栏 -->
+            <RowDefinition Height="Auto"/>
+            <!-- 主内容区域 -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- 顶部工具栏 -->
+        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 页面标题 -->
+                <TextBlock Grid.Column="0" Text="{Binding CurrentPageTitle}" 
+                          FontSize="18" FontWeight="SemiBold"
+                          VerticalAlignment="Center"/>
+
+                <!-- 工具栏按钮 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                    <!-- 主题切换按钮 -->
+                    <Button Classes="ToolbarButton" Command="{Binding ToggleThemeCommand}"
+                            ToolTip.Tip="切换主题">
+                        <TextBlock Text="🌙" FontSize="16"/>
+                    </Button>
+                    
+
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 主内容区域 -->
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <!-- 左侧导航菜单 -->
+                <ColumnDefinition Width="250"/>
+                <!-- 分隔线 -->
+                <ColumnDefinition Width="Auto"/>
+                <!-- 主内容区域 -->
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+
+            <!-- 左侧导航菜单 -->
+            <Border Grid.Column="0" Classes="NavigationPanel">
+                <ScrollViewer>
+                    <StackPanel>
+                        <!-- 导航标题 -->
+                        <TextBlock Text="Navigation" Classes="NavigationTitle"/>
+                        
+                        <!-- 导航菜单项 -->
+                        <ListBox ItemsSource="{Binding NavigationItems}"
+                                SelectedItem="{Binding SelectedNavigationItem}"
+                                Classes="NavigationList">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate x:DataType="models:NavigationItem">
+                                    <Button Classes="NavigationItem"
+                                           Classes.Selected="{Binding IsSelected}"
+                                           Command="{Binding NavigateCommand}"
+                                           CommandParameter="{Binding}">
+                                        <StackPanel Classes="NavigationItemContent">
+                                            <TextBlock Text="{Binding Icon}" Classes="NavigationIcon"/>
+                                            <TextBlock Text="{Binding Title}" Classes="NavigationText"/>
+                                        </StackPanel>
+                                    </Button>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </StackPanel>
+                </ScrollViewer>
+            </Border>
+
+            <!-- 分隔线 -->
+            <GridSplitter Grid.Column="1" Width="4" Background="Transparent"
+                         ResizeDirection="Columns" HorizontalAlignment="Center"/>
+
+            <!-- 主内容区域 -->
+            <Border Grid.Column="2" Margin="20" Background="White"
+                   CornerRadius="8" BoxShadow="0 2 8 0 #20000000">
+                <Grid>
+                    <!-- 默认内容 -->
+                    <ContentPresenter Content="{Binding CurrentContent}"
+                                     IsVisible="{Binding CurrentContentType, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=Logs}"/>
+                    
+                    <!-- 日志显示内容 -->
+                    <Grid IsVisible="{Binding CurrentContentType, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=Logs}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 日志标题栏 -->
+                        <Grid Grid.Row="0" Margin="20,20,20,10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <TextBlock Grid.Column="0" Text="日志输出" FontWeight="SemiBold" FontSize="18"
+                                      VerticalAlignment="Center"/>
+
+                            <Button Grid.Column="1" Classes="ToolbarButton" Command="{Binding ClearLogsCommand}"
+                                   ToolTip.Tip="清空日志">
+                                <TextBlock Text="🗑️" FontSize="16"/>
+                            </Button>
+                        </Grid>
+
+                        <!-- 日志内容 -->
+                        <ScrollViewer Grid.Row="1" Margin="20,0,20,20">
+                            <ItemsControl ItemsSource="{Binding LogMessages}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="models:LogMessage">
+                                        <TextBlock Text="{Binding FormattedMessage}"
+                                                  Classes="LogMessage"
+                                                  Classes.Info="{Binding Level, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:LogLevel.Info}}"
+                                                  Classes.Warning="{Binding Level, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:LogLevel.Warning}}"
+                                                  Classes.Error="{Binding Level, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:LogLevel.Error}}"
+                                                  Classes.Debug="{Binding Level, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static models:LogLevel.Debug}}"
+                                                  TextWrapping="Wrap" Margin="0,2"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+                    </Grid>
+                </Grid>
+            </Border>
+        </Grid>
+
+
+    </Grid>
+
+</Window>

@@ -1,0 +1,492 @@
+<UserControl x:Class="ProjectIgnite.Views.ProjectSourceView"
+             xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="using:ProjectIgnite.Converters"
+             xmlns:vm="using:ProjectIgnite.ViewModels"
+             xmlns:dto="using:ProjectIgnite.DTOs"
+             mc:Ignorable="d" 
+             d:DesignHeight="800" d:DesignWidth="1200"
+             d:DataContext="{d:DesignInstance Type=vm:ProjectSourceViewModel}"
+             Loaded="UserControl_Loaded">
+    
+    <UserControl.Resources>
+        <!-- 状态颜色转换器 -->
+        <local:StatusColorConverter x:Key="StatusColorConverter" />
+        <local:StatusTextConverter x:Key="StatusTextConverter" />
+        <local:ProgressVisibilityConverter x:Key="ProgressVisibilityConverter" />
+        <local:FileSizeConverter x:Key="FileSizeConverter" />
+        <local:NumberFormatConverter x:Key="NumberFormatConverter" />
+        <local:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <local:StringToVisibilityConverter x:Key="StringToVisibilityConverter" />
+        <local:ZeroToVisibilityConverter x:Key="ZeroToVisibilityConverter" />
+        <local:CountToVisibilityConverter x:Key="CountToVisibilityConverter" />
+        <local:NullToVisibilityConverter x:Key="NullToVisibilityConverter" />
+    </UserControl.Resources>
+    
+    <UserControl.Styles>
+        <!-- 项目卡片样式 -->
+        <Style Selector="Border.ProjectCard">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{StaticResource LargeCornerRadius}" />
+            <Setter Property="Margin" Value="8" />
+            <Setter Property="Padding" Value="16" />
+            <Setter Property="BoxShadow" Value="{StaticResource SmallShadow}" />
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                    <BoxShadowsTransition Property="BoxShadow" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
+        </Style>
+        <Style Selector="Border.ProjectCard:pointerover">
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="BoxShadow" Value="{StaticResource MediumShadow}" />
+        </Style>
+        
+        <!-- 按钮样式 -->
+        <Style Selector="Button.ActionButton">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColor}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundChromeWhiteBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="CornerRadius" Value="{StaticResource MediumCornerRadius}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.ActionButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark1}" />
+        </Style>
+        <Style Selector="Button.ActionButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark2}" />
+        </Style>
+        <Style Selector="Button.ActionButton:disabled">
+            <Setter Property="Background" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlDisabledBaseMediumLowBrush}" />
+        </Style>
+        
+        <!-- 次要按钮样式 -->
+        <Style Selector="Button.SecondaryButton">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="12,6" />
+            <Setter Property="Margin" Value="4,0" />
+            <Setter Property="CornerRadius" Value="{StaticResource MediumCornerRadius}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+        <Style Selector="Button.SecondaryButton:pointerover">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseMediumLowBrush}" />
+        </Style>
+        <Style Selector="Button.SecondaryButton:pressed">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseMediumBrush}" />
+        </Style>
+    </UserControl.Styles>
+    
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        
+        <!-- 标题栏 -->
+        <Grid Grid.Row="0" Margin="20,20,20,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            
+            <StackPanel Grid.Column="0" Orientation="Vertical">
+                <TextBlock Text="项目源管理" 
+                           FontSize="24" 
+                           FontWeight="Bold" 
+                           Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                <TextBlock Text="管理和分析您的Git项目" 
+                           FontSize="14" 
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                           Margin="0,4,0,0" />
+            </StackPanel>
+            
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="添加项目" 
+                        Classes="ActionButton"
+                        Command="{Binding AddProjectCommand}"
+                        Margin="0,0,8,0" />
+                <Button Content="刷新" 
+                        Classes="SecondaryButton"
+                        Command="{Binding RefreshCommand}" />
+            </StackPanel>
+        </Grid>
+        
+        <!-- 搜索和筛选栏 -->
+        <Border Grid.Row="1" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1"
+                Padding="20,16" 
+                Margin="20,0">
+            <StackPanel Spacing="16">
+                <!-- 搜索栏 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <TextBlock Grid.Column="0" 
+                               Text="搜索和筛选" 
+                               FontSize="16" 
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
+                               VerticalAlignment="Center"/>
+                    
+                    <Button Grid.Column="1" 
+                            Content="清除筛选" 
+                            Classes="SecondaryButton"
+                            Command="{Binding ClearSearchCommand}" />
+                </Grid>
+                
+                <!-- 筛选控件 -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="12" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- 搜索框 -->
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="搜索项目" 
+                                   FontSize="13" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                   Margin="0,0,0,6"/>
+                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+                                BorderThickness="1" 
+                                CornerRadius="{StaticResource MediumCornerRadius}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                
+                                <TextBox Grid.Column="0" 
+                                         Text="{Binding SearchKeyword}"
+                                         Watermark="搜索项目名称或Git URL..."
+                                         BorderThickness="0" 
+                                         Background="Transparent"
+                                         Padding="12,8"
+                                         VerticalAlignment="Center"
+                                         FontSize="14" />
+                                
+                                <Button Grid.Column="1" 
+                                        Content="🔍" 
+                                        Background="Transparent" 
+                                        BorderThickness="0" 
+                                        Padding="8" 
+                                        Command="{Binding SearchCommand}" />
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                    
+                    <!-- 状态筛选 -->
+                    <StackPanel Grid.Column="2">
+                        <TextBlock Text="项目状态" 
+                                   FontSize="13" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                   Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding AvailableStatuses}"
+                                  SelectedItem="{Binding SelectedStatus}"
+                                  Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                                  BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                  BorderThickness="1"
+                                  CornerRadius="{StaticResource MediumCornerRadius}"
+                                  Padding="12,8"
+                                  FontSize="14"
+                                  PlaceholderText="选择状态" />
+                    </StackPanel>
+                    
+                    <!-- 语言筛选 -->
+                    <StackPanel Grid.Column="4">
+                        <TextBlock Text="主要语言" 
+                                   FontSize="13" 
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                   Margin="0,0,0,6"/>
+                        <ComboBox ItemsSource="{Binding AvailableLanguages}"
+                                  SelectedItem="{Binding SelectedLanguage}"
+                                  Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                                  BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                                  BorderThickness="1"
+                                  CornerRadius="{StaticResource MediumCornerRadius}"
+                                  Padding="12,8"
+                                  FontSize="14"
+                                  PlaceholderText="选择语言" />
+                    </StackPanel>
+                </Grid>
+            </StackPanel>
+        </Border>
+        
+        <!-- 项目列表 -->
+        <ScrollViewer Grid.Row="2" Margin="20" VerticalScrollBarVisibility="Auto">
+            <Grid>
+                <!-- 加载指示器 -->
+                <StackPanel Orientation="Vertical" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ProgressBar IsIndeterminate="True" Width="200" Height="4" Margin="0,0,0,16" />
+                    <TextBlock Text="正在加载项目列表..." FontSize="14" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                </StackPanel>
+                
+                <!-- 空状态 -->
+                <StackPanel Orientation="Vertical" 
+                            HorizontalAlignment="Center" 
+                            VerticalAlignment="Center"
+                            IsVisible="{Binding FilteredProjects.Count, Converter={StaticResource ZeroToVisibilityConverter}}">
+                    <TextBlock Text="📁" FontSize="48" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" HorizontalAlignment="Center" />
+                    <TextBlock Text="暂无项目" FontSize="18" FontWeight="Bold" Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                               HorizontalAlignment="Center" Margin="0,16,0,8" />
+                    <TextBlock Text="点击添加项目开始管理您的Git项目" FontSize="14" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+                               HorizontalAlignment="Center" />
+                </StackPanel>
+                
+                <!-- 项目网格 -->
+                <ItemsControl ItemsSource="{Binding FilteredProjects}"
+                              IsVisible="{Binding FilteredProjects.Count, Converter={StaticResource CountToVisibilityConverter}}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <UniformGrid Columns="2" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="{x:Type dto:ProjectSourceInfo}">
+                            <Border Classes="ProjectCard">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    
+                                    <!-- 项目标题和状态 -->
+                                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="{Binding Name}" 
+                                                       FontSize="18" 
+                                                       FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <TextBlock Text="{Binding GitUrl}" 
+                                                       FontSize="12" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                                                       TextTrimming="CharacterEllipsis" 
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        
+                                        <Border Grid.Column="1" 
+                                                Background="{Binding Status, Converter={StaticResource StatusColorConverter}}"
+                                                CornerRadius="12" 
+                                                Padding="8,4">
+                                            <TextBlock Text="{Binding Status, Converter={StaticResource StatusTextConverter}}" 
+                                                       FontSize="11" 
+                                                       Foreground="{DynamicResource SystemControlForegroundChromeWhiteBrush}" 
+                                                       FontWeight="Bold" />
+                                        </Border>
+                                    </Grid>
+                                    
+                                    <!-- 描述 -->
+                                    <TextBlock Grid.Row="1" 
+                                               Text="{Binding Description}" 
+                                               FontSize="13" 
+                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                                               TextWrapping="Wrap" 
+                                               MaxHeight="40" 
+                                               TextTrimming="WordEllipsis" 
+                                               Margin="0,0,0,12"
+                                               IsVisible="{Binding Description, Converter={StaticResource StringToVisibilityConverter}}" />
+                                    
+                                    <!-- 进度条 -->
+                                    <StackPanel Grid.Row="2" 
+                                                Margin="0,0,0,12"
+                                                IsVisible="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Grid Margin="0,0,0,4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            
+                                            <TextBlock Grid.Column="0" 
+                                                       Text="{Binding CurrentOperation}" 
+                                                       FontSize="12" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                            <TextBlock Grid.Column="1" 
+                                                       Text="{Binding OverallProgress, StringFormat={}{0}%}" 
+                                                       FontSize="12" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                        </Grid>
+                                        
+                                        <ProgressBar Value="{Binding OverallProgress}" 
+                                                     Maximum="100" 
+                                                     Height="6" 
+                                                     Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
+                                                     Foreground="{DynamicResource SystemAccentColor}" />
+                                    </StackPanel>
+                                    
+                                    <!-- 项目信息 -->
+                                    <Grid Grid.Row="3" Margin="0,0,0,16">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock Text="主要语言" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+                                            <TextBlock Text="{Binding PrimaryLanguage}" 
+                                                       FontSize="13" 
+                                                       FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                                       Margin="0,2,0,8" />
+                                            
+                                            <TextBlock Text="文件数量" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+                                            <TextBlock Text="{Binding TotalFiles, Converter={StaticResource NumberFormatConverter}}" 
+                                                       FontSize="13" 
+                                                       FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+                                        
+                                        <StackPanel Grid.Column="1">
+                                            <TextBlock Text="代码行数" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+                                            <TextBlock Text="{Binding FormattedLinesOfCode}" 
+                                                       FontSize="13" 
+                                                       FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                                       Margin="0,2,0,8" />
+                                            
+                                            <TextBlock Text="项目大小" FontSize="11" Foreground="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+                                            <TextBlock Text="{Binding FormattedTotalSize}" 
+                                                       FontSize="13" 
+                                                       FontWeight="Bold" 
+                                                       Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" 
+                                                       Margin="0,2,0,0" />
+                                        </StackPanel>
+                                    </Grid>
+                                    
+                                    <!-- 操作按钮 -->
+                                    <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+                                        <Button Content="打开文件夹" 
+                                                Classes="SecondaryButton"
+                                                Command="{Binding DataContext.OpenProjectFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                FontSize="12" 
+                                                Padding="8,4" />
+                                        
+                                        <Button Content="重新克隆" 
+                                                Classes="ActionButton"
+                                                Command="{Binding DataContext.CloneProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                FontSize="12" 
+                                                Padding="8,4"
+                                                IsVisible="{Binding CanReclone, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        
+                                        <Button Content="重新分析" 
+                                                Classes="ActionButton"
+                                                Command="{Binding DataContext.AnalyzeProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                FontSize="12" 
+                                                Padding="8,4"
+                                                IsVisible="{Binding CanReanalyze, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        
+                                        <Button Content="删除" 
+                                                Classes="SecondaryButton"
+                                                Command="{Binding DataContext.DeleteProjectCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                                                CommandParameter="{Binding}"
+                                                FontSize="12" 
+                                                Padding="8,4"
+                                                Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" />
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
+        </ScrollViewer>
+        
+        <!-- 状态栏 -->
+        <Border Grid.Row="3" 
+                Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="20,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                
+                <!-- 状态信息 -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <TextBlock Text="{Binding StatusMessage}" 
+                               FontSize="13" 
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding StatusMessage, Converter={StaticResource StringToVisibilityConverter}}" />
+                    
+                    <TextBlock Text="{Binding ErrorMessage}" 
+                               FontSize="13" 
+                               Foreground="{DynamicResource SystemControlErrorTextForegroundBrush}" 
+                               VerticalAlignment="Center"
+                               IsVisible="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+                
+                <!-- 统计信息 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                            IsVisible="{Binding Statistics, Converter={StaticResource NullToVisibilityConverter}}">
+                    <TextBlock Text="总项目: " 
+                               FontSize="13" 
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                    <TextBlock Text="{Binding Statistics.TotalProjects}" 
+                               FontSize="13" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}" />
+                    <TextBlock Text=" | 已完成: " 
+                               FontSize="13" 
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                               Margin="8,0,0,0" />
+                    <TextBlock Text="{Binding Statistics.CompletedProjects}" 
+                               FontSize="13" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource SystemControlPositiveTextForegroundBrush}" />
+                    <TextBlock Text=" | 处理中: " 
+                               FontSize="13" 
+                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                               Margin="8,0,0,0" />
+                    <TextBlock Text="{Binding Statistics.ProcessingProjects}" 
+                               FontSize="13" 
+                               FontWeight="Bold" 
+                               Foreground="{DynamicResource SystemControlWarningTextForegroundBrush}" />
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>
