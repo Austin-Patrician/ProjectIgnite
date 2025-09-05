@@ -324,32 +324,20 @@
                                                Margin="0,0,0,12"
                                                IsVisible="{Binding Description, Converter={StaticResource StringToVisibilityConverter}}" />
                                     
-                                    <!-- 进度条 -->
-                                    <StackPanel Grid.Row="2" 
-                                                Margin="0,0,0,12"
-                                                IsVisible="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Grid Margin="0,0,0,4">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            
-                                            <TextBlock Grid.Column="0" 
-                                                       Text="{Binding CurrentOperation}" 
-                                                       FontSize="12" 
-                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                            <TextBlock Grid.Column="1" 
-                                                       Text="{Binding OverallProgress, StringFormat={}{0}%}" 
-                                                       FontSize="12" 
-                                                       Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
-                                        </Grid>
-                                        
-                                        <ProgressBar Value="{Binding OverallProgress}" 
-                                                     Maximum="100" 
-                                                     Height="6" 
-                                                     Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" 
-                                                     Foreground="{DynamicResource SystemAccentColor}" />
-                                    </StackPanel>
+                                    <!-- 简化状态指示器 -->
+                                    <Border Grid.Row="2" 
+                                            Margin="0,0,0,12"
+                                            IsVisible="{Binding IsProcessing, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                            Background="{DynamicResource SystemControlBackgroundBaseLowBrush}"
+                                            BorderBrush="{DynamicResource SystemAccentColor}"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            Padding="8,6">
+                                        <TextBlock Text="{Binding CurrentOperation}" 
+                                                   FontSize="12" 
+                                                   Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                                                   HorizontalAlignment="Center" />
+                                    </Border>
                                     
                                     <!-- 项目信息 -->
                                     <Grid Grid.Row="3" Margin="0,0,0,16">

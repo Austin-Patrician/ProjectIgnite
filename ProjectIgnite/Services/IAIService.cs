@@ -13,30 +13,7 @@ namespace ProjectIgnite.Services
     /// </summary>
     public interface IAIService
     {
-        /// <summary>
-        /// 生成流式聊天完成
-        /// </summary>
-        /// <param name="systemPrompt">系统提示词</param>
-        /// <param name="userMessage">用户消息</param>
-        /// <param name="cancellationToken">取消令牌</param>
-        /// <returns>流式响应</returns>
-        IAsyncEnumerable<StreamingChatCompletionUpdate> GenerateStreamingAsync(
-            string systemPrompt,
-            string userMessage,
-            CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// 生成聊天完成（非流式）
-        /// </summary>
-        /// <param name="systemPrompt">系统提示词</param>
-        /// <param name="userMessage">用户消息</param>
-        /// <param name="cancellationToken">取消令牌</param>
-        /// <returns>完整响应</returns>
-        Task<ChatCompletion> GenerateAsync(
-            string systemPrompt,
-            string userMessage,
-            CancellationToken cancellationToken = default);
-
+        
         /// <summary>
         /// 生成架构说明
         /// </summary>

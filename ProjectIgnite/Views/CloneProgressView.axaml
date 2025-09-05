@@ -153,7 +153,7 @@
                     </Grid>
                 </Border>
                 
-                <!-- 克隆进度 -->
+                <!-- 简化状态显示 -->
                 <Border Background="White" 
                         BorderBrush="#E0E0E0" 
                         BorderThickness="1" 
@@ -161,106 +161,34 @@
                         Padding="16" 
                         Margin="0,0,0,16">
                     <StackPanel>
-                        <TextBlock Text="克隆进度" 
+                        <TextBlock Text="操作状态" 
                                    FontSize="16" 
                                    FontWeight="Medium" 
                                    Margin="0,0,0,12"/>
                         
-                        <!-- 总体进度 -->
-                        <Grid Margin="0,0,0,12">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <ProgressBar Grid.Column="0" 
-                                         Classes="ModernProgressBar" 
-                                         Value="{Binding OverallProgress}" 
-                                         Maximum="100" 
-                                         Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" 
-                                       Text="{Binding OverallProgress, StringFormat={}{0:F1}%}" 
-                                       FontWeight="Medium" 
-                                       VerticalAlignment="Center"/>
-                        </Grid>
+                        <!-- 当前状态指示器 -->
+                        <Border Background="#F8F9FA" 
+                                BorderBrush="#2196F3" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="12,8" 
+                                Margin="0,0,0,8">
+                            <TextBlock Text="{Binding CurrentStatus}" 
+                                       FontSize="14" 
+                                       Foreground="#333333" 
+                                       HorizontalAlignment="Center" 
+                                       FontWeight="Medium"/>
+                        </Border>
                         
-                        <!-- 当前状态 -->
-                        <TextBlock Text="{Binding CurrentStatus}" 
-                                   FontSize="14" 
+                        <!-- 简化时间信息 -->
+                        <TextBlock Text="{Binding ElapsedTime, StringFormat=已用时间: {0:mm\:ss}}" 
+                                   FontSize="12" 
                                    Foreground="#666666" 
-                                   Margin="0,0,0,8"/>
-                        
-                        <!-- 详细信息 -->
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            
-                            <StackPanel Grid.Row="0" Grid.Column="0" 
-                                        Orientation="Horizontal" 
-                                        Margin="0,0,0,4">
-                                <TextBlock Text="已接收对象: " 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                                <TextBlock Text="{Binding ReceivedObjects, Converter={StaticResource NumberFormatConverter}}" 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="0" Grid.Column="1" 
-                                        Orientation="Horizontal" 
-                                        Margin="0,0,0,4">
-                                <TextBlock Text="总对象数: " 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                                <TextBlock Text="{Binding TotalObjects, Converter={StaticResource NumberFormatConverter}}" 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                            </StackPanel>
-                            
-                            <StackPanel Grid.Row="1" Grid.Column="0" 
-                                        Orientation="Horizontal" 
-                                        Margin="0,0,0,4">
-                                <TextBlock Text="已接收: " 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                                <TextBlock Text="{Binding ReceivedBytes, Converter={StaticResource FileSizeConverter}}" 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                            </StackPanel>
-                            <StackPanel Grid.Row="1" Grid.Column="1" 
-                                        Orientation="Horizontal" 
-                                        Margin="0,0,0,4">
-                                <TextBlock Text="速度: " 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                                <TextBlock Text="{Binding Speed, Converter={StaticResource FileSizeConverter}}" 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                                <TextBlock Text="/s" 
-                                           FontSize="12" 
-                                           Foreground="#888888"/>
-                            </StackPanel>
-                            
-                            <TextBlock Grid.Row="2" Grid.Column="0" 
-                                       Text="{Binding ElapsedTime, StringFormat=已用时间: {0:mm\\:ss}}" 
-                                       FontSize="12" 
-                                       Foreground="#888888"/>
-                            <TextBlock Grid.Row="2" Grid.Column="1" 
-                                       Text="{Binding EstimatedTime, StringFormat=预计剩余: {0:mm\\:ss}}" 
-                                       FontSize="12" 
-                                       Foreground="#888888"
-                                       IsVisible="{Binding EstimatedTime, Converter={StaticResource StringToVisibilityConverter}}"/>
-                        </Grid>
+                                   HorizontalAlignment="Center"/>
                     </StackPanel>
                 </Border>
                 
-                <!-- 语言分析进度 -->
+                <!-- 简化分析状态 -->
                 <Border Background="White" 
                         BorderBrush="#E0E0E0" 
                         BorderThickness="1" 
@@ -273,25 +201,18 @@
                                    FontWeight="Medium" 
                                    Margin="0,0,0,12"/>
                         
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <ProgressBar Grid.Column="0" 
-                                         Classes="ModernProgressBar" 
-                                         IsIndeterminate="True" 
-                                         Margin="0,0,12,0"/>
-                            <TextBlock Grid.Column="1" 
-                                       Text="分析中..." 
-                                       FontWeight="Medium" 
-                                       VerticalAlignment="Center"/>
-                        </Grid>
-                        
-                        <TextBlock Text="{Binding AnalysisStatus}" 
-                                   FontSize="14" 
-                                   Foreground="#666666"/>
+                        <!-- 分析状态指示器 -->
+                        <Border Background="#FFF3E0" 
+                                BorderBrush="#FF9800" 
+                                BorderThickness="1" 
+                                CornerRadius="4" 
+                                Padding="12,8">
+                            <TextBlock Text="{Binding AnalysisStatus}" 
+                                       FontSize="14" 
+                                       Foreground="#E65100" 
+                                       HorizontalAlignment="Center" 
+                                       FontWeight="Medium"/>
+                        </Border>
                     </StackPanel>
                 </Border>
                 

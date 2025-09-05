@@ -1,6 +1,5 @@
-using System;
+﻿using System;
 using Avalonia;
-using Avalonia.WebView.iOS;
 
 
 namespace ProjectIgnite
@@ -19,7 +18,6 @@ namespace ProjectIgnite
             => AppBuilder.Configure<App>()
                 .UsePlatformDetect()
                 .WithInterFont()
-                .LogToTrace()
-                .UseIosWebView();
+                .LogToTrace();
     }
 }

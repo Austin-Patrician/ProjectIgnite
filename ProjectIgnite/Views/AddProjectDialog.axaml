@@ -5,29 +5,36 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="添加项目源" 
-        Height="680" 
-        Width="560"
-        MinHeight="600"
-        MinWidth="500"
-        MaxHeight="800"
-        MaxWidth="680"
+        Height="720" 
+        Width="600"
+        MinHeight="650"
+        MinWidth="550"
+        MaxHeight="900"
+        MaxWidth="750"
         WindowStartupLocation="CenterOwner"
         CanResize="True"
         ShowInTaskbar="False"
-        Background="{DynamicResource SystemControlPageBackgroundChromeLowBrush}">
+        Background="{DynamicResource SystemControlPageBackgroundChromeLowBrush}"
+        Icon="/Assets/avalonia-logo.ico">
     
     <Window.Styles>
         <!-- 对话框专用样式 - 兼容版本 -->
         <Style Selector="TextBox.DialogInput">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="14,12"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Margin" Value="0,0,0,18"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
         </Style>
         
         <Style Selector="TextBox.DialogInput:focus">
@@ -63,25 +70,34 @@
             <Setter Property="Background" Value="{DynamicResource SystemAccentColor}"/>
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="20,12"/>
+            <Setter Property="Padding" Value="24,14"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="MinWidth" Value="120"/>
-            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="MinWidth" Value="130"/>
+            <Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <TransformOperationsTransition Property="RenderTransform" Duration="0:0:0.1"/>
+                </Transitions>
+            </Setter>
         </Style>
         
         <Style Selector="Button.DialogPrimary:pointerover">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark1}"/>
+            <Setter Property="RenderTransform" Value="scale(1.02)"/>
         </Style>
         
         <Style Selector="Button.DialogPrimary:pressed">
             <Setter Property="Background" Value="{DynamicResource SystemAccentColorDark2}"/>
+            <Setter Property="RenderTransform" Value="scale(0.98)"/>
         </Style>
         
         <Style Selector="Button.DialogPrimary:disabled">
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
+            <Setter Property="Opacity" Value="0.6"/>
         </Style>
         
         <Style Selector="Button.DialogSecondary">
@@ -89,12 +105,18 @@
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="Padding" Value="20,14"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="FontWeight" Value="Medium"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="MinWidth" Value="80"/>
-            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="MinWidth" Value="90"/>
+            <Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
         </Style>
         
         <Style Selector="Button.DialogSecondary:pointerover">
@@ -103,23 +125,30 @@
         </Style>
         
         <Style Selector="CheckBox.DialogOption">
-            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
-            <Setter Property="Margin" Value="0,6"/>
-            <Setter Property="Padding" Value="8,0,0,0"/>
+            <Setter Property="Margin" Value="0,8"/>
+            <Setter Property="Padding" Value="10,0,0,0"/>
+            <Setter Property="MinHeight" Value="32"/>
         </Style>
         
         <Style Selector="ComboBox.DialogSelect">
-            <Setter Property="Padding" Value="12,10"/>
+            <Setter Property="Padding" Value="14,12"/>
             <Setter Property="FontSize" Value="14"/>
             <Setter Property="BorderBrush" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"/>
             <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseHighBrush}"/>
-            <Setter Property="CornerRadius" Value="4"/>
-            <Setter Property="Margin" Value="0,0,0,16"/>
-            <Setter Property="MinHeight" Value="36"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Margin" Value="0,0,0,18"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="Transitions">
+                <Transitions>
+                    <BrushTransition Property="BorderBrush" Duration="0:0:0.2"/>
+                    <BrushTransition Property="Background" Duration="0:0:0.2"/>
+                </Transitions>
+            </Setter>
         </Style>
         
         <Style Selector="ComboBox.DialogSelect:focus">
@@ -129,6 +158,12 @@
         
         <Style Selector="ComboBox.DialogSelect:pointerover">
             <Setter Property="BorderBrush" Value="{DynamicResource SystemAccentColor}"/>
+        </Style>
+        
+        <Style Selector="ComboBox.DialogSelect:disabled">
+            <Setter Property="Background" Value="{DynamicResource SystemControlBackgroundBaseLowBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"/>
+            <Setter Property="Opacity" Value="0.6"/>
         </Style>
         
         <Style Selector="Border.InfoPanel">
@@ -196,16 +231,16 @@
             </Grid.RowDefinitions>
             
             <!-- 标题区域 -->
-            <StackPanel Grid.Row="0" Margin="0,0,0,24">
+            <StackPanel Grid.Row="0" Margin="0,0,0,32">
                 <TextBlock Text="添加新的项目源" 
-                           FontSize="22" 
+                           FontSize="24" 
                            FontWeight="Bold" 
                            Foreground="{DynamicResource SystemControlForegroundBaseHighBrush}"
-                           Margin="0,0,0,6"/>
+                           Margin="0,0,0,8"/>
                 <TextBlock Text="从 Git 仓库克隆项目到本地并进行管理" 
-                           FontSize="14" 
+                           FontSize="15" 
                            Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}"
-                           LineHeight="20"/>
+                           LineHeight="22"/>
             </StackPanel>
             
             <!-- 表单内容 -->
@@ -217,28 +252,13 @@
                 <StackPanel Spacing="0">
                     
                     <!-- Git URL 区域 -->
-                    <StackPanel Margin="0,0,0,24">
+                    <StackPanel Margin="0,0,0,32">
                         <TextBlock Text="Git 仓库地址 *" Classes="DialogLabel"/>
                         <TextBox x:Name="GitUrlTextBox" 
                                  Classes="DialogInput"
                                  Text="{Binding GitUrl}"
                                  Watermark="https://github.com/user/repository.git"
                                  TextChanged="GitUrlTextBox_TextChanged"/>
-                        
-                        <!-- 验证状态显示 -->
-                        <Border x:Name="ValidationPanel" 
-                                Classes="ErrorPanel"
-                                IsVisible="{Binding HasValidationMessage}">
-                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                <TextBlock Text="⚠" 
-                                           FontSize="14" 
-                                           Foreground="#FFE74C3C"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding ValidationMessage}" 
-                                           Classes="ErrorText"
-                                           VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </Border>
                         
                         <!-- 验证成功状态显示 -->
                         <Border Classes="InfoPanel"

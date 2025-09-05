@@ -22,7 +22,7 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "net9.0"
+          "net8.0"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -32,8 +32,8 @@
           "https://devops.rspinternal.com/repository/nuget-group/index.json": {}
         },
         "frameworks": {
-          "net9.0": {
-            "targetAlias": "net9.0",
+          "net8.0": {
+            "targetAlias": "net8.0",
             "projectReferences": {}
           }
         },
@@ -50,8 +50,8 @@
         "SdkAnalysisLevel": "9.0.300"
       },
       "frameworks": {
-        "net9.0": {
-          "targetAlias": "net9.0",
+        "net8.0": {
+          "targetAlias": "net8.0",
           "dependencies": {
             "Avalonia": {
               "target": "Package",
@@ -69,27 +69,75 @@
               "target": "Package",
               "version": "[11.2.7, )"
             },
+            "Avalonia.ReactiveUI": {
+              "target": "Package",
+              "version": "[11.2.7, )"
+            },
             "Avalonia.Themes.Fluent": {
               "target": "Package",
               "version": "[11.2.7, )"
+            },
+            "CefGlue.Avalonia": {
+              "target": "Package",
+              "version": "[120.6099.211, )"
+            },
+            "ColorTextBlock.Avalonia": {
+              "target": "Package",
+              "version": "[11.0.3-a1, )"
             },
             "CommunityToolkit.Mvvm": {
               "target": "Package",
               "version": "[8.2.1, )"
             },
+            "Markdown.Avalonia": {
+              "target": "Package",
+              "version": "[11.0.3-a1, )"
+            },
             "Microsoft.EntityFrameworkCore.Design": {
               "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
               "suppressParent": "All",
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[8.0.0, )"
             },
             "Microsoft.EntityFrameworkCore.Sqlite": {
               "target": "Package",
-              "version": "[9.0.0, )"
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.AI": {
+              "target": "Package",
+              "version": "[9.8.0, )"
+            },
+            "Microsoft.Extensions.AI.OpenAI": {
+              "target": "Package",
+              "version": "[9.8.0-preview.1.25412.6, )"
             },
             "Microsoft.Extensions.DependencyInjection": {
               "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Http": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Microsoft.Extensions.Logging.Console": {
+              "target": "Package",
+              "version": "[8.0.0, )"
+            },
+            "Octokit": {
+              "target": "Package",
+              "version": "[13.0.1, )"
+            },
+            "System.Text.Json": {
+              "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "uikit": {
+              "target": "Package",
+              "version": "[2.25.0, )"
             }
           },
           "imports": [

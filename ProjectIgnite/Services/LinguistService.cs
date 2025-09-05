@@ -145,6 +145,7 @@ namespace ProjectIgnite.Services
 
             var languageStats = new Dictionary<string, LanguageStatistics>();
             var extensionMap = GetFileExtensionLanguageMap();
+            var nonProgrammingLanguages = GetNonProgrammingLanguages();
 
             try
             {
@@ -203,8 +204,9 @@ namespace ProjectIgnite.Services
                     stat.Percentage = totalBytes > 0 ? (double)stat.ByteCount / totalBytes * 100 : 0;
                 }
 
-                // 设置主要语言
-                var primaryLang = languageStats.Values.OrderByDescending(s => s.ByteCount).FirstOrDefault();
+                // 设置主要语言（排除非编程语言）
+                var programmingLanguages = languageStats.Values.Where(s => !nonProgrammingLanguages.Contains(s.Language)).ToList();
+                var primaryLang = programmingLanguages.OrderByDescending(s => s.ByteCount).FirstOrDefault();
                 if (primaryLang != null)
                 {
                     primaryLang.IsPrimary = true;
@@ -212,7 +214,8 @@ namespace ProjectIgnite.Services
                 }
 
                 result.Languages = languageStats;
-                result.TotalLines = languageStats.Values.Sum(s => s.LineCount);
+                // 只计算编程语言的代码行数
+                result.TotalLines = programmingLanguages.Sum(s => s.LineCount);
                 result.TotalBytes = totalBytes;
                 result.Status = LinguistAnalysisStatus.Completed;
                 result.Progress = 100;
@@ -347,8 +350,14 @@ namespace ProjectIgnite.Services
         {
             var possiblePaths = new[]
             {
+                // 尝试bin目录下的git-linguist
+                "F:\\software\\linguist-9.2.0\\linguist-9.2.0\\bin\\git-linguist",
+                // 尝试Ruby bundle exec方式
+                "bundle",
+                // 尝试直接的linguist命令
                 "linguist",
                 "github-linguist",
+                // 尝试gem安装路径
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gem", "bin", "linguist"),
                 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".gem", "bin", "linguist.bat")
             };
@@ -357,9 +366,28 @@ namespace ProjectIgnite.Services
             {
                 try
                 {
-                    var process = new Process
+                    ProcessStartInfo startInfo;
+                    
+                    // 对bundle命令特殊处理
+                    if (path == "bundle")
                     {
-                        StartInfo = new ProcessStartInfo
+                        var linguistDir = "F:\\software\\linguist-9.2.0\\linguist-9.2.0";
+                        if (!Directory.Exists(linguistDir)) continue;
+                        
+                        startInfo = new ProcessStartInfo
+                        {
+                            FileName = "bundle",
+                            Arguments = "exec ruby -I lib bin/github-linguist --version",
+                            UseShellExecute = false,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            CreateNoWindow = true,
+                            WorkingDirectory = linguistDir
+                        };
+                    }
+                    else
+                    {
+                        startInfo = new ProcessStartInfo
                         {
                             FileName = path,
                             Arguments = "--version",
@@ -367,9 +395,10 @@ namespace ProjectIgnite.Services
                             RedirectStandardOutput = true,
                             RedirectStandardError = true,
                             CreateNoWindow = true
-                        }
-                    };
+                        };
+                    }
 
+                    var process = new Process { StartInfo = startInfo };
                     process.Start();
                     process.WaitForExit(5000);
                     
@@ -394,6 +423,13 @@ namespace ProjectIgnite.Services
         {
             if (string.IsNullOrEmpty(_linguistPath))
                 throw new InvalidOperationException("Linguist不可用");
+
+            // 如果使用bundle，需要特殊处理
+            if (_linguistPath == "bundle")
+            {
+                var linguistDir = "F:\\software\\linguist-9.2.0\\linguist-9.2.0";
+                return await RunCommandAsync("bundle", $"exec ruby -I lib bin/github-linguist {arguments}", linguistDir, cancellationToken);
+            }
 
             return await RunCommandAsync(_linguistPath, arguments, workingDirectory, cancellationToken);
         }
@@ -475,26 +511,130 @@ namespace ProjectIgnite.Services
         /// </summary>
         private Dictionary<string, string> GetFileExtensionLanguageMap()
         {
-            return new Dictionary<string, string>
+            return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             {
-                {".cs", "C#"}, {".csx", "C#"}, {".cake", "C#"},
-                {".js", "JavaScript"}, {".jsx", "JavaScript"}, {".mjs", "JavaScript"},
-                {".ts", "TypeScript"}, {".tsx", "TypeScript"},
-                {".py", "Python"}, {".pyw", "Python"}, {".py3", "Python"},
-                {".java", "Java"}, {".class", "Java"}, {".jar", "Java"},
-                {".cpp", "C++"}, {".cxx", "C++"}, {".cc", "C++"}, {".hpp", "C++"},
-                {".c", "C"}, {".h", "C"},
-                {".go", "Go"}, {".rs", "Rust"}, {".php", "PHP"}, {".rb", "Ruby"},
-                {".swift", "Swift"}, {".kt", "Kotlin"}, {".dart", "Dart"},
-                {".html", "HTML"}, {".htm", "HTML"}, {".xhtml", "HTML"},
-                {".css", "CSS"}, {".scss", "SCSS"}, {".sass", "SCSS"}, {".less", "Less"},
-                {".vue", "Vue"}, {".svelte", "Svelte"},
-                {".json", "JSON"}, {".xml", "XML"}, {".yaml", "YAML"}, {".yml", "YAML"},
-                {".toml", "TOML"}, {".md", "Markdown"}, {".markdown", "Markdown"},
-                {".sql", "SQL"}, {".mysql", "SQL"}, {".pgsql", "SQL"},
-                {".sh", "Shell"}, {".bash", "Shell"}, {".zsh", "Shell"}, {".fish", "Shell"},
-                {".ps1", "PowerShell"}, {".psm1", "PowerShell"}, {".psd1", "PowerShell"},
-                {".bat", "Batch"}, {".cmd", "Batch"}
+                // C# 相关
+                {".cs", "C#"},
+                {".csx", "C#"},
+                {".csproj", "MSBuild"},
+                {".sln", "Microsoft Visual Studio Solution"},
+                
+                // JavaScript/TypeScript
+                {".js", "JavaScript"},
+                {".jsx", "JavaScript"},
+                {".ts", "TypeScript"},
+                {".tsx", "TypeScript"},
+                {".mjs", "JavaScript"},
+                {".cjs", "JavaScript"},
+                
+                // Python
+                {".py", "Python"},
+                {".pyx", "Python"},
+                {".pyi", "Python"},
+                {".pyc", "Python"},
+                
+                // Java
+                {".java", "Java"},
+                {".class", "Java"},
+                {".jar", "Java"},
+                
+                // C/C++
+                {".c", "C"},
+                {".h", "C"},
+                {".cpp", "C++"},
+                {".cxx", "C++"},
+                {".cc", "C++"},
+                {".hpp", "C++"},
+                {".hxx", "C++"},
+                
+                // Web 相关
+                {".html", "HTML"},
+                {".htm", "HTML"},
+                {".css", "CSS"},
+                {".scss", "SCSS"},
+                {".sass", "Sass"},
+                {".less", "Less"},
+                {".php", "PHP"},
+                
+                // 其他常见语言
+                {".go", "Go"},
+                {".rs", "Rust"},
+                {".rb", "Ruby"},
+                {".swift", "Swift"},
+                {".kt", "Kotlin"},
+                {".scala", "Scala"},
+                {".r", "R"},
+                {".m", "Objective-C"},
+                {".mm", "Objective-C++"},
+                {".pl", "Perl"},
+                {".sh", "Shell"},
+                {".bash", "Shell"},
+                {".zsh", "Shell"},
+                {".fish", "Shell"},
+                {".ps1", "PowerShell"},
+                {".psm1", "PowerShell"},
+                {".psd1", "PowerShell"},
+                {".bat", "Batchfile"},
+                {".cmd", "Batchfile"},
+                
+                // 配置文件
+                {".json", "JSON"},
+                {".xml", "XML"},
+                {".yaml", "YAML"},
+                {".yml", "YAML"},
+                {".toml", "TOML"},
+                {".ini", "INI"},
+                {".cfg", "INI"},
+                {".conf", "Configuration"},
+                {".config", "Configuration"},
+                
+                // 文档和标记语言
+                {".md", "Markdown"},
+                {".markdown", "Markdown"},
+                {".txt", "Text"},
+                {".rst", "reStructuredText"},
+                {".tex", "TeX"},
+                {".latex", "LaTeX"},
+                
+                // 数据库
+                {".sql", "SQL"},
+                {".sqlite", "SQLite"},
+                {".db", "Database"},
+                
+                // 其他
+                {".dockerfile", "Dockerfile"},
+                {".gitignore", "Ignore List"},
+                {".gitattributes", "Git Attributes"},
+                {".editorconfig", "EditorConfig"},
+                {".env", "Environment"},
+                {".log", "Log"},
+            };
+        }
+
+        /// <summary>
+        /// 获取非编程语言列表（用于排除代码行数统计）
+        /// </summary>
+        private HashSet<string> GetNonProgrammingLanguages()
+        {
+            return new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                // 配置文件
+                "JSON", "XML", "YAML", "TOML", "INI", "Configuration",
+                
+                // 文档和标记语言
+                "Markdown", "Text", "reStructuredText", "TeX", "LaTeX",
+                
+                // 数据文件
+                "CSV", "TSV", "Database", "SQLite",
+                
+                // 版本控制和工具配置
+                "Ignore List", "Git Attributes", "EditorConfig", "Environment", "Log",
+                
+                // 项目配置
+                "MSBuild", "Microsoft Visual Studio Solution",
+                
+                // 其他非编程文件
+                "Binary", "Image", "Audio", "Video", "Archive", "Font"
             };
         }
 

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 using ProjectIgnite.Data;
 using ProjectIgnite.Repositories;
 using ProjectIgnite.ViewModels;
@@ -21,12 +22,18 @@ namespace ProjectIgnite.Services
         public static void ConfigureServices()
         {
             var services = new ServiceCollection();
+            
+            // 注册DbContext为Scoped，确保在同一作用域内使用同一实例
+            services.AddDbContext<ProjectIgniteDbContext>(options => {
+                // DbContext配置将在OnConfiguring中处理
+            }, ServiceLifetime.Scoped);
+            
+            // 注册DbContextFactory用于创建独立的DbContext实例
+            services.AddDbContextFactory<ProjectIgniteDbContext>(options => {
+                // DbContext配置将在OnConfiguring中处理
+            });
 
-            // 注册数据库上下文 - 修改为 Transient 以避免线程安全问题
-            services.AddTransient<ProjectIgniteDbContext>();
-
-            // 注册数据访问层 - 也改为 Transient 以匹配 DbContext
-            services.AddTransient<IProjectRepository, ProjectRepository>();
+            services.AddScoped<IProjectRepository, ProjectRepository>();
 
             // 注册服务层
             services.AddSingleton<IGitService, GitService>();
@@ -36,19 +43,22 @@ namespace ProjectIgnite.Services
             services.AddSingleton<IDiagramService, DiagramService>();
             services.AddSingleton<IGitHubService, GitHubService>();
             services.AddSingleton<IAIService, AIService>();
+            services.AddSingleton<ILocalProjectAnalyzer, LocalProjectAnalyzer>();
+            
+            // 注册Project Launcher相关服务
+            services.AddSingleton<IProjectDetectionService, ProjectDetectionService>();
+            services.AddSingleton<IPortManagementService, PortManagementService>();
+            services.AddSingleton<IProcessManagementService, ProcessManagementService>();
             
             // 注册日志服务
             services.AddLogging(builder => builder.AddConsole());
 
             // 注册ViewModels
             services.AddTransient<ProjectSourceViewModel>();
-            services.AddTransient<ProjectStructureViewModel>(provider => 
-                new ProjectStructureViewModel(
-                    provider.GetRequiredService<IDiagramService>(),
-                    provider.GetRequiredService<IGitHubService>(),
-                    provider.GetRequiredService<IAIService>()));
+            services.AddTransient<ProjectStructureViewModel>();
             services.AddTransient<AddProjectDialogViewModel>();
             services.AddTransient<CloneProgressViewModel>();
+            services.AddTransient<ProjectLauncherViewModel>();
 
             _serviceProvider = services.BuildServiceProvider();
         }

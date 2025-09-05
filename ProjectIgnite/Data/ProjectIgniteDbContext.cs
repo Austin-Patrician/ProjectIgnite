@@ -13,6 +13,21 @@ namespace ProjectIgnite.Data
     public class ProjectIgniteDbContext : DbContext
     {
         /// <summary>
+        /// 无参数构造函数
+        /// </summary>
+        public ProjectIgniteDbContext()
+        {
+        }
+
+        /// <summary>
+        /// 带选项的构造函数
+        /// </summary>
+        /// <param name="options">数据库上下文选项</param>
+        public ProjectIgniteDbContext(DbContextOptions<ProjectIgniteDbContext> options) : base(options)
+        {
+        }
+
+        /// <summary>
         /// 项目源表
         /// </summary>
         public DbSet<ProjectSource> ProjectSources { get; set; }
@@ -28,6 +43,21 @@ namespace ProjectIgnite.Data
         public DbSet<CloneHistory> CloneHistories { get; set; }
 
         /// <summary>
+        /// 启动项目表
+        /// </summary>
+        public DbSet<LaunchedProject> LaunchedProjects { get; set; }
+
+        /// <summary>
+        /// 项目配置表
+        /// </summary>
+        public DbSet<ProjectConfiguration> ProjectConfigurations { get; set; }
+
+        /// <summary>
+        /// 端口分配表
+        /// </summary>
+        public DbSet<PortAllocation> PortAllocations { get; set; }
+
+        /// <summary>
         /// 配置数据库连接
         /// </summary>
         /// <param name="optionsBuilder">选项构建器</param>
@@ -35,16 +65,16 @@ namespace ProjectIgnite.Data
         {
             if (!optionsBuilder.IsConfigured)
             {
-                // 获取应用程序数据目录
-                var appDataPath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "ProjectIgnite");
-                
-                // 确保目录存在
-                Directory.CreateDirectory(appDataPath);
+                // // 获取应用程序数据目录
+                // var appDataPath = Path.Combine(
+                //     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                //     "ProjectIgnite");
+                //
+                // // 确保目录存在
+                // Directory.CreateDirectory(appDataPath);
                 
                 // 数据库文件路径
-                var dbPath = Path.Combine(appDataPath, "ProjectIgnite.db");
+                var dbPath = "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ProjectIgnite.db";
                 
                 optionsBuilder.UseSqlite($"Data Source={dbPath}");
             }
@@ -121,6 +151,92 @@ namespace ProjectIgnite.Data
                 entity.HasIndex(e => e.ProjectId);
                 entity.HasIndex(e => e.Status);
                 entity.HasIndex(e => e.StartTime);
+            });
+
+            // 配置LaunchedProject实体
+            modelBuilder.Entity<LaunchedProject>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.ProjectName).IsRequired().HasMaxLength(255);
+                entity.Property(e => e.ProjectPath).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.ProjectType).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("Stopped");
+                entity.Property(e => e.CurrentEnvironment).HasMaxLength(50);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
+                
+                // 配置外键关系
+                entity.HasOne(e => e.ProjectSource)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProjectSourceId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // 创建索引
+                entity.HasIndex(e => e.ProjectSourceId);
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.ProjectType);
+                entity.HasIndex(e => e.ProcessId);
+            });
+
+            // 配置ProjectConfiguration实体
+            modelBuilder.Entity<ProjectConfiguration>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Name).IsRequired().HasMaxLength(100);
+                entity.Property(e => e.Environment).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.StartCommand).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.WorkingDirectory).HasMaxLength(500);
+                entity.Property(e => e.Arguments).HasMaxLength(1000);
+                entity.Property(e => e.ConfigFilePath).HasMaxLength(500);
+                entity.Property(e => e.HealthCheckUrl).HasMaxLength(500);
+                entity.Property(e => e.HealthCheckInterval).HasDefaultValue(30);
+                entity.Property(e => e.AutoRestart).HasDefaultValue(false);
+                entity.Property(e => e.MaxRestartCount).HasDefaultValue(3);
+                entity.Property(e => e.IsDefault).HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
+                
+                // 配置外键关系
+                entity.HasOne(e => e.ProjectSource)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProjectSourceId)
+                      .OnDelete(DeleteBehavior.Cascade);
+                
+                // 创建索引
+                entity.HasIndex(e => e.ProjectSourceId);
+                entity.HasIndex(e => e.Environment);
+                entity.HasIndex(e => e.IsDefault);
+                entity.HasIndex(e => new { e.ProjectSourceId, e.Name }).IsUnique();
+            });
+
+            // 配置PortAllocation实体
+            modelBuilder.Entity<PortAllocation>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.Status).IsRequired().HasMaxLength(20).HasDefaultValue("Available");
+                entity.Property(e => e.Description).HasMaxLength(255);
+                entity.Property(e => e.UsageCount).HasDefaultValue(0);
+                entity.Property(e => e.IsSystemReserved).HasDefaultValue(false);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("datetime('now')");
+                entity.Property(e => e.UpdatedAt).HasDefaultValueSql("datetime('now')");
+                
+                // 配置外键关系
+                entity.HasOne(e => e.ProjectSource)
+                      .WithMany()
+                      .HasForeignKey(e => e.ProjectSourceId)
+                      .OnDelete(DeleteBehavior.SetNull);
+                
+                entity.HasOne(e => e.LaunchedProject)
+                      .WithMany()
+                      .HasForeignKey(e => e.LaunchedProjectId)
+                      .OnDelete(DeleteBehavior.SetNull);
+                
+                // 创建索引
+                entity.HasIndex(e => e.Port).IsUnique();
+                entity.HasIndex(e => e.Status);
+                entity.HasIndex(e => e.ProjectSourceId);
+                entity.HasIndex(e => e.LaunchedProjectId);
+                entity.HasIndex(e => e.IsSystemReserved);
             });
         }
 

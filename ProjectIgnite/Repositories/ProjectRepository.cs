@@ -2,10 +2,15 @@ using Microsoft.EntityFrameworkCore;
 using ProjectIgnite.Data;
 using ProjectIgnite.Models;
 using ProjectIgnite.DTOs;
+using ProjectIgnite.Utilities;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System.Threading;
 
 namespace ProjectIgnite.Repositories
 {
@@ -14,11 +19,16 @@ namespace ProjectIgnite.Repositories
     /// </summary>
     public class ProjectRepository : IProjectRepository
     {
-        private readonly ProjectIgniteDbContext _context;
+        private readonly IServiceProvider _serviceProvider;
+        private readonly IDbContextFactory<ProjectIgniteDbContext> _contextFactory;
+        private readonly SemaphoreSlim _semaphore = new(1, 1);
+        private readonly ILogger<ProjectRepository>? _logger;
 
-        public ProjectRepository(ProjectIgniteDbContext context)
+        public ProjectRepository(IServiceProvider serviceProvider, IDbContextFactory<ProjectIgniteDbContext> contextFactory, ILogger<ProjectRepository>? logger = null)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _serviceProvider = serviceProvider;
+            _contextFactory = contextFactory;
+            _logger = logger;
         }
 
         #region 项目源管理
@@ -27,7 +37,8 @@ namespace ProjectIgnite.Repositories
         {
             try
             {
-                var projects = await _context.ProjectSources
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var projects = await context.ProjectSources
                     .OrderByDescending(p => p.CreatedAt)
                     .ToListAsync();
 
@@ -43,7 +54,7 @@ namespace ProjectIgnite.Repositories
                     {
                         // 记录错误但继续处理其他项目
                         Console.WriteLine($"Error mapping project {project.Id}: {ex.Message}");
-                        
+
                         // 添加一个错误状态的项目信息
                         result.Add(new ProjectSourceInfo
                         {
@@ -74,7 +85,8 @@ namespace ProjectIgnite.Repositories
                 if (id <= 0)
                     return null;
 
-                var project = await _context.ProjectSources
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var project = await context.ProjectSources
                     .FirstOrDefaultAsync(p => p.Id == id);
 
                 if (project == null)
@@ -96,7 +108,8 @@ namespace ProjectIgnite.Repositories
                 if (string.IsNullOrWhiteSpace(gitUrl))
                     return null;
 
-                var project = await _context.ProjectSources
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var project = await context.ProjectSources
                     .FirstOrDefaultAsync(p => p.GitUrl == gitUrl);
 
                 if (project == null)
@@ -118,7 +131,8 @@ namespace ProjectIgnite.Repositories
                 if (string.IsNullOrWhiteSpace(localPath))
                     return null;
 
-                var project = await _context.ProjectSources
+                using var context = await _contextFactory.CreateDbContextAsync();
+                var project = await context.ProjectSources
                     .FirstOrDefaultAsync(p => p.LocalPath == localPath);
 
                 if (project == null)
@@ -135,48 +149,53 @@ namespace ProjectIgnite.Repositories
 
         public async Task<int> CreateProjectAsync(ProjectSource projectSource)
         {
-            try
+            if (projectSource == null)
+                throw new ArgumentNullException(nameof(projectSource));
+
+            // 验证必需字段
+            if (string.IsNullOrWhiteSpace(projectSource.Name))
+                throw new ArgumentException("Project name is required", nameof(projectSource));
+
+            if (string.IsNullOrWhiteSpace(projectSource.GitUrl))
+                throw new ArgumentException("Git URL is required", nameof(projectSource));
+
+            return await RetryHelper.ExecuteWithRetryAsync(async () =>
             {
-                if (projectSource == null)
-                    throw new ArgumentNullException(nameof(projectSource));
-
-                // 验证必需字段
-                if (string.IsNullOrWhiteSpace(projectSource.Name))
-                    throw new ArgumentException("Project name is required", nameof(projectSource));
-
-                if (string.IsNullOrWhiteSpace(projectSource.GitUrl))
-                    throw new ArgumentException("Git URL is required", nameof(projectSource));
-
+                using var context = await _contextFactory.CreateDbContextAsync();
                 projectSource.CreatedAt = DateTime.Now;
                 projectSource.UpdatedAt = DateTime.Now;
-                
+
                 // 设置默认状态
                 if (string.IsNullOrWhiteSpace(projectSource.Status))
                     projectSource.Status = "pending";
 
-                _context.ProjectSources.Add(projectSource);
-                await _context.SaveChangesAsync();
+                context.ProjectSources.Add(projectSource);
+                await context.SaveChangesAsync();
 
                 return projectSource.Id;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error creating project: {ex.Message}");
-                throw; // 重新抛出异常，让调用者处理
-            }
+            }, maxRetries: 3, delayMs: 500, _logger, "CreateProject");
         }
 
         public async Task<bool> UpdateProjectAsync(ProjectSource projectSource)
         {
+            if (projectSource == null)
+                return false;
+
             try
             {
-                projectSource.UpdatedAt = DateTime.Now;
-                _context.ProjectSources.Update(projectSource);
-                await _context.SaveChangesAsync();
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    projectSource.UpdatedAt = DateTime.Now;
+                    context.ProjectSources.Update(projectSource);
+                    await context.SaveChangesAsync();
+                }, maxRetries: 3, delayMs: 500, _logger, "UpdateProject");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to update project {ProjectId}", projectSource.Id);
                 return false;
             }
         }
@@ -185,63 +204,100 @@ namespace ProjectIgnite.Repositories
         {
             try
             {
-                var project = await _context.ProjectSources.FindAsync(id);
-                if (project == null)
-                    return false;
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    var project = await context.ProjectSources.FindAsync(id);
+                    if (project == null)
+                        throw new InvalidOperationException($"Project with id {id} not found");
 
-                _context.ProjectSources.Remove(project);
-                await _context.SaveChangesAsync();
+                    context.ProjectSources.Remove(project);
+                    await context.SaveChangesAsync();
+                }, maxRetries: 3, delayMs: 500, _logger, "DeleteProject");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to delete project {ProjectId}", id);
                 return false;
             }
         }
 
         public async Task<bool> UpdateProjectStatusAsync(int id, string status, string? errorMessage = null)
         {
+            await _semaphore.WaitAsync();
             try
             {
-                var project = await _context.ProjectSources.FindAsync(id);
-                if (project == null)
-                    return false;
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    var project = await context.ProjectSources.FindAsync(id);
+                    if (project == null)
+                        throw new InvalidOperationException($"Project with id {id} not found");
 
-                project.Status = status;
-                project.ErrorMessage = errorMessage;
-                project.UpdatedAt = DateTime.Now;
+                    project.Status = status;
+                    project.ErrorMessage = errorMessage;
+                    project.UpdatedAt = DateTime.Now;
 
-                await _context.SaveChangesAsync();
+                    await context.SaveChangesAsync();
+                }, maxRetries: 3, delayMs: 500, _logger, "UpdateProjectStatus");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to update project status for project {ProjectId}", id);
                 return false;
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 
-        public async Task<bool> UpdateProjectProgressAsync(int id, int? cloneProgress = null, int? analysisProgress = null)
+        /// <summary>
+        /// 更新项目进度（简化版本 - 仅在必要时使用）
+        /// 注意：此方法已简化，建议使用UpdateProjectStatusAsync来更新状态
+        /// </summary>
+        public async Task<bool> UpdateProjectProgressAsync(int id, int? cloneProgress = null,
+            int? analysisProgress = null)
         {
+            // 如果没有提供任何进度值，直接返回成功
+            if (!cloneProgress.HasValue && !analysisProgress.HasValue)
+                return true;
+
+            await _semaphore.WaitAsync();
             try
             {
-                var project = await _context.ProjectSources.FindAsync(id);
-                if (project == null)
-                    return false;
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    var project = await context.ProjectSources.FindAsync(id);
+                    if (project == null)
+                        throw new InvalidOperationException($"Project with id {id} not found");
 
-                if (cloneProgress.HasValue)
-                    project.CloneProgress = cloneProgress.Value;
+                    // 仅在提供值时更新进度
+                    if (cloneProgress.HasValue)
+                        project.CloneProgress = cloneProgress.Value;
+
+                    if (analysisProgress.HasValue)
+                        project.AnalysisProgress = analysisProgress.Value;
+
+                    project.UpdatedAt = DateTime.Now;
+                    await context.SaveChangesAsync();
+                }, maxRetries: 3, delayMs: 500, _logger, "UpdateProjectProgress");
                 
-                if (analysisProgress.HasValue)
-                    project.AnalysisProgress = analysisProgress.Value;
-
-                project.UpdatedAt = DateTime.Now;
-
-                await _context.SaveChangesAsync();
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to update project progress for project {ProjectId}", id);
                 return false;
+            }
+            finally
+            {
+                _semaphore.Release();
             }
         }
 
@@ -251,10 +307,11 @@ namespace ProjectIgnite.Repositories
 
         public async Task<List<LanguageAnalysis>> GetProjectLanguagesAsync(int projectId)
         {
-            var results = await _context.LanguageAnalyses
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var results = await context.LanguageAnalyses
                 .Where(la => la.ProjectId == projectId)
                 .ToListAsync();
-            
+
             return results
                 .OrderByDescending(la => la.Percentage)
                 .ToList();
@@ -262,44 +319,56 @@ namespace ProjectIgnite.Repositories
 
         public async Task<bool> SaveLanguageAnalysisAsync(int projectId, List<LanguageDetail> languages)
         {
+            if (languages == null || !languages.Any())
+                return false;
+
             try
             {
-                // 清除现有的语言分析结果
-                await ClearLanguageAnalysisAsync(projectId);
-
-                // 添加新的语言分析结果
-                var analysisResults = languages.Select(lang => new LanguageAnalysis
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
                 {
-                    ProjectId = projectId,
-                    Language = lang.Name,
-                    LineCount = lang.LineCount,
-                    FileCount = lang.FileCount,
-                    Percentage = lang.Percentage,
-                    ByteCount = lang.ByteCount,
-                    AnalyzedAt = DateTime.Now
-                }).ToList();
+                    // 清除现有的语言分析结果
+                    await ClearLanguageAnalysisAsync(projectId);
 
-                _context.LanguageAnalyses.AddRange(analysisResults);
-                await _context.SaveChangesAsync();
-
-                // 更新项目的主要语言
-                var primaryLanguage = languages.OrderByDescending(l => l.Percentage).FirstOrDefault();
-                if (primaryLanguage != null)
-                {
-                    var project = await _context.ProjectSources.FindAsync(projectId);
-                    if (project != null)
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    // 添加新的语言分析结果
+                    var analysisResults = languages.Select(lang => new LanguageAnalysis
                     {
-                        project.PrimaryLanguage = primaryLanguage.Name;
-                        project.LastAnalyzedAt = DateTime.Now;
-                        project.UpdatedAt = DateTime.Now;
-                        await _context.SaveChangesAsync();
-                    }
-                }
+                        ProjectId = projectId,
+                        Language = lang.Name,
+                        LineCount = lang.LineCount,
+                        FileCount = lang.FileCount,
+                        Percentage = lang.Percentage,
+                        ByteCount = lang.ByteCount,
+                        AnalyzedAt = DateTime.Now
+                    }).ToList();
 
+                    context.LanguageAnalyses.AddRange(analysisResults);
+                    await context.SaveChangesAsync();
+
+                    // 更新项目的主要语言
+                    //这要移除json , markdown 等非编程语言
+                    string[] nonProgrammingLanguages = new[]
+                        { "JSON", "Markdown", "Text", "XML", "YAML", "HTML", "CSS", "Shell", "Batchfile", "Makefile" };
+                    var primaryLanguage = languages.Where(_ => !nonProgrammingLanguages.Contains(_.Name))
+                        .MaxBy(l => l.Percentage);
+                    if (primaryLanguage != null)
+                    {
+                        var project = await context.ProjectSources.FindAsync(projectId);
+                        if (project != null)
+                        {
+                            project.PrimaryLanguage = primaryLanguage.Name;
+                            project.LastAnalyzedAt = DateTime.Now;
+                            project.UpdatedAt = DateTime.Now;
+                            await context.SaveChangesAsync();
+                        }
+                    }
+                }, maxRetries: 3, delayMs: 500, _logger, "SaveLanguageAnalysis");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to save language analysis for project {ProjectId}", projectId);
                 return false;
             }
         }
@@ -308,20 +377,25 @@ namespace ProjectIgnite.Repositories
         {
             try
             {
-                var existingAnalyses = await _context.LanguageAnalyses
-                    .Where(la => la.ProjectId == projectId)
-                    .ToListAsync();
-
-                if (existingAnalyses.Any())
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
                 {
-                    _context.LanguageAnalyses.RemoveRange(existingAnalyses);
-                    await _context.SaveChangesAsync();
-                }
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    var existingAnalyses = await context.LanguageAnalyses
+                        .Where(la => la.ProjectId == projectId)
+                        .ToListAsync();
 
+                    if (existingAnalyses.Any())
+                    {
+                        context.LanguageAnalyses.RemoveRange(existingAnalyses);
+                        await context.SaveChangesAsync();
+                    }
+                }, maxRetries: 3, delayMs: 500, _logger, "ClearLanguageAnalysis");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to clear language analysis for project {ProjectId}", projectId);
                 return false;
             }
         }
@@ -332,7 +406,8 @@ namespace ProjectIgnite.Repositories
 
         public async Task<List<CloneHistory>> GetCloneHistoryAsync(int projectId, int limit = 10)
         {
-            return await _context.CloneHistories
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.CloneHistories
                 .Where(ch => ch.ProjectId == projectId)
                 .OrderByDescending(ch => ch.StartTime)
                 .Take(limit)
@@ -341,31 +416,59 @@ namespace ProjectIgnite.Repositories
 
         public async Task<int> CreateCloneHistoryAsync(CloneHistory cloneHistory)
         {
-            cloneHistory.StartTime = DateTime.Now;
-            _context.CloneHistories.Add(cloneHistory);
-            await _context.SaveChangesAsync();
-            return cloneHistory.Id;
+            if (cloneHistory == null)
+                throw new ArgumentNullException(nameof(cloneHistory));
+
+            try
+            {
+                int historyId = 0;
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    cloneHistory.StartTime = DateTime.Now;
+                    context.CloneHistories.Add(cloneHistory);
+                    await context.SaveChangesAsync();
+                    historyId = cloneHistory.Id;
+                }, maxRetries: 3, delayMs: 500, _logger, "CreateCloneHistory");
+                
+                return historyId;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "Failed to create clone history for project {ProjectId}", cloneHistory.ProjectId);
+                throw;
+            }
         }
 
         public async Task<bool> UpdateCloneHistoryAsync(CloneHistory cloneHistory)
         {
+            if (cloneHistory == null)
+                return false;
+
             try
             {
-                _context.CloneHistories.Update(cloneHistory);
-                await _context.SaveChangesAsync();
+                await RetryHelper.ExecuteWithRetryAsync(async () =>
+                {
+                    using var context = await _contextFactory.CreateDbContextAsync();
+                    context.CloneHistories.Update(cloneHistory);
+                    await context.SaveChangesAsync();
+                }, maxRetries: 3, delayMs: 500, _logger, "UpdateCloneHistory");
+                
                 return true;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger?.LogError(ex, "Failed to update clone history {HistoryId}", cloneHistory.Id);
                 return false;
             }
         }
 
         public async Task<CloneHistory?> GetActiveCloneHistoryAsync(int projectId)
         {
-            return await _context.CloneHistories
-                .Where(ch => ch.ProjectId == projectId && 
-                           (ch.Status == "started" || ch.Status == "progress"))
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.CloneHistories
+                .Where(ch => ch.ProjectId == projectId &&
+                             (ch.Status == "started" || ch.Status == "progress"))
                 .OrderByDescending(ch => ch.StartTime)
                 .FirstOrDefaultAsync();
         }
@@ -374,15 +477,17 @@ namespace ProjectIgnite.Repositories
 
         #region 搜索和筛选
 
-        public async Task<List<ProjectSourceInfo>> SearchProjectsAsync(string? keyword = null, string? status = null, string? language = null)
+        public async Task<List<ProjectSourceInfo>> SearchProjectsAsync(string? keyword = null, string? status = null,
+            string? language = null)
         {
-            var query = _context.ProjectSources.AsQueryable();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var query = context.ProjectSources.AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                query = query.Where(p => p.Name.Contains(keyword) || 
-                                       p.Description!.Contains(keyword) ||
-                                       p.GitUrl.Contains(keyword));
+                query = query.Where(p => p.Name.Contains(keyword) ||
+                                         p.Description!.Contains(keyword) ||
+                                         p.GitUrl.Contains(keyword));
             }
 
             if (!string.IsNullOrWhiteSpace(status))
@@ -411,7 +516,8 @@ namespace ProjectIgnite.Repositories
 
         public async Task<List<string>> GetAllLanguagesAsync()
         {
-            return await _context.LanguageAnalyses
+            using var context = await _contextFactory.CreateDbContextAsync();
+            return await context.LanguageAnalyses
                 .Select(la => la.Language)
                 .Distinct()
                 .OrderBy(lang => lang)
@@ -420,14 +526,30 @@ namespace ProjectIgnite.Repositories
 
         public async Task<ProjectStatistics> GetProjectStatisticsAsync()
         {
-            var totalProjects = await _context.ProjectSources.CountAsync();
-            var completedProjects = await _context.ProjectSources.CountAsync(p => p.Status == "completed");
-            var processingProjects = await _context.ProjectSources.CountAsync(p => p.Status == "cloning" || p.Status == "analyzing");
-            var errorProjects = await _context.ProjectSources.CountAsync(p => p.Status == "error");
-            
-            var totalLines = await _context.LanguageAnalyses.SumAsync(la => la.LineCount);
-            var totalFiles = await _context.LanguageAnalyses.SumAsync(la => la.FileCount);
-            var languageCount = await _context.LanguageAnalyses.Select(la => la.Language).Distinct().CountAsync();
+            using var context = await _contextFactory.CreateDbContextAsync();
+            var totalProjects = await context.ProjectSources.CountAsync();
+            var completedProjects = await context.ProjectSources.CountAsync(p => p.Status == "completed");
+            var processingProjects =
+                await context.ProjectSources.CountAsync(p => p.Status == "cloning" || p.Status == "analyzing");
+            var errorProjects = await context.ProjectSources.CountAsync(p => p.Status == "error");
+
+            // 定义非编程语言列表
+            var nonProgrammingLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "JSON", "XML", "YAML", "TOML", "INI", "Configuration",
+                "Markdown", "Text", "reStructuredText", "TeX", "LaTeX",
+                "CSV", "TSV", "Database", "SQLite",
+                "Ignore List", "Git Attributes", "EditorConfig", "Environment", "Log",
+                "MSBuild", "Microsoft Visual Studio Solution",
+                "Binary", "Image", "Audio", "Video", "Archive", "Font"
+            };
+
+            // 只计算编程语言的代码行数
+            var totalLines = await context.LanguageAnalyses
+                .Where(la => !nonProgrammingLanguages.Contains(la.Language))
+                .SumAsync(la => la.LineCount);
+            var totalFiles = await context.LanguageAnalyses.SumAsync(la => la.FileCount);
+            var languageCount = await context.LanguageAnalyses.Select(la => la.Language).Distinct().CountAsync();
 
             return new ProjectStatistics
             {
@@ -462,14 +584,32 @@ namespace ProjectIgnite.Repositories
                     Percentage = la.Percentage
                 }).ToList() ?? new List<LanguageDetail>();
 
+                // 定义非编程语言列表
+                var nonProgrammingLanguages = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    "JSON", "XML", "YAML", "TOML", "INI", "Configuration",
+                    "Markdown", "Text", "reStructuredText", "TeX", "LaTeX",
+                    "CSV", "TSV", "Database", "SQLite",
+                    "Ignore List", "Git Attributes", "EditorConfig", "Environment", "Log",
+                    "MSBuild", "Microsoft Visual Studio Solution",
+                    "Binary", "Image", "Audio", "Video", "Archive", "Font"
+                };
+
                 // 计算统计数据，确保非负值
                 var totalFiles = Math.Max(0, languages?.Sum(la => la.FileCount) ?? 0);
-                var totalLines = Math.Max(0, (int)(languages?.Sum(la => la.LineCount) ?? 0));
+                // 只计算编程语言的代码行数
+                var programmingLanguages =
+                    languages?.Where(la => !nonProgrammingLanguages.Contains(la.Language ?? "")) ??
+                    Enumerable.Empty<LanguageAnalysis>();
+                var totalLines = Math.Max(0, (int)(programmingLanguages.Sum(la => la.LineCount)));
                 var totalSize = Math.Max(0, languages?.Sum(la => la.ByteCount) ?? 0);
+
+                // 计算项目文件夹实际大小
+                var actualProjectSize = GetDirectorySize(project.LocalPath);
 
                 // 构建语言百分比字典
                 var languagePercentages = languages?.ToDictionary(
-                    la => la.Language ?? "Unknown", 
+                    la => la.Language ?? "Unknown",
                     la => (double)la.Percentage
                 ) ?? new Dictionary<string, double>();
 
@@ -481,7 +621,9 @@ namespace ProjectIgnite.Repositories
                     LocalPath = project.LocalPath ?? string.Empty,
                     Description = project.Description ?? string.Empty,
                     PrimaryLanguage = project.PrimaryLanguage ?? string.Empty,
-                    Status = Enum.TryParse<ProjectStatus>(project.Status, true, out var status) ? status : ProjectStatus.Pending,
+                    Status = Enum.TryParse<ProjectStatus>(project.Status, true, out var status)
+                        ? status
+                        : ProjectStatus.Pending,
                     CloneProgress = Math.Max(0, Math.Min(100, project.CloneProgress)),
                     AnalysisProgress = Math.Max(0, Math.Min(100, project.AnalysisProgress)),
                     ErrorMessage = project.ErrorMessage,
@@ -497,7 +639,7 @@ namespace ProjectIgnite.Repositories
                     TotalLines = totalLines,
                     TotalSize = totalSize,
                     LinesOfCode = totalLines, // 同时设置LinesOfCode属性
-                    ProjectSize = totalSize   // 同时设置ProjectSize属性
+                    ProjectSize = actualProjectSize // 使用实际文件夹大小
                 };
             }
             catch (Exception ex)
@@ -511,7 +653,9 @@ namespace ProjectIgnite.Repositories
                     LocalPath = project.LocalPath ?? string.Empty,
                     Description = project.Description ?? string.Empty,
                     PrimaryLanguage = project.PrimaryLanguage ?? string.Empty,
-                    Status = Enum.TryParse<ProjectStatus>(project.Status, true, out var status) ? status : ProjectStatus.Error,
+                    Status = Enum.TryParse<ProjectStatus>(project.Status, true, out var status)
+                        ? status
+                        : ProjectStatus.Error,
                     CloneProgress = Math.Max(0, Math.Min(100, project.CloneProgress)),
                     AnalysisProgress = Math.Max(0, Math.Min(100, project.AnalysisProgress)),
                     ErrorMessage = project.ErrorMessage ?? $"数据映射错误: {ex.Message}",
@@ -527,9 +671,73 @@ namespace ProjectIgnite.Repositories
                     TotalLines = 0,
                     TotalSize = 0,
                     LinesOfCode = 0,
-                    ProjectSize = 0
+                    ProjectSize = GetDirectorySize(project.LocalPath)
                 };
             }
+        }
+
+        /// <summary>
+        /// 计算目录的实际大小（字节）
+        /// </summary>
+        private static long GetDirectorySize(string? directoryPath)
+        {
+            if (string.IsNullOrWhiteSpace(directoryPath) || !Directory.Exists(directoryPath))
+                return 0;
+
+            try
+            {
+                var directoryInfo = new DirectoryInfo(directoryPath);
+                return GetDirectorySizeRecursive(directoryInfo);
+            }
+            catch
+            {
+                return 0;
+            }
+        }
+
+        /// <summary>
+        /// 递归计算目录大小
+        /// </summary>
+        private static long GetDirectorySizeRecursive(DirectoryInfo directoryInfo)
+        {
+            long size = 0;
+
+            try
+            {
+                // 计算当前目录中所有文件的大小
+                var files = directoryInfo.GetFiles();
+                foreach (var file in files)
+                {
+                    try
+                    {
+                        size += file.Length;
+                    }
+                    catch
+                    {
+                        // 忽略无法访问的文件
+                    }
+                }
+
+                // 递归计算子目录的大小
+                var subDirectories = directoryInfo.GetDirectories();
+                foreach (var subDirectory in subDirectories)
+                {
+                    try
+                    {
+                        size += GetDirectorySizeRecursive(subDirectory);
+                    }
+                    catch
+                    {
+                        // 忽略无法访问的目录
+                    }
+                }
+            }
+            catch
+            {
+                // 忽略访问错误
+            }
+
+            return size;
         }
 
         #endregion

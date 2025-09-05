@@ -73,6 +73,8 @@ namespace ProjectIgnite.ViewModels
             
             NavigationItems.Add(new NavigationItem("首页", "🏠", "Home") { NavigateCommand = navigateCommand });
             NavigationItems.Add(new NavigationItem("项目源", "📁", "ProjectSource") { NavigateCommand = navigateCommand });
+            NavigationItems.Add(new NavigationItem("项目结构", "🏗️", "ProjectStructure") { NavigateCommand = navigateCommand });
+            NavigationItems.Add(new NavigationItem("Project Launcher", "🚀", "ProjectLauncher") { NavigateCommand = navigateCommand });
             NavigationItems.Add(new NavigationItem("设置", "⚙️", "Settings") { NavigateCommand = navigateCommand });
             NavigationItems.Add(new NavigationItem("日志", "📋", "Logs") { NavigateCommand = navigateCommand });
             NavigationItems.Add(new NavigationItem("关于", "ℹ️", "About") { NavigateCommand = navigateCommand });
@@ -106,6 +108,12 @@ namespace ProjectIgnite.ViewModels
             {
                 case "ProjectSource":
                     CurrentContent = new ProjectSourceView();
+                    break;
+                case "ProjectStructure":
+                    CurrentContent = new ProjectStructureView();
+                    break;
+                case "ProjectLauncher":
+                    CurrentContent = new ProjectLauncherView();
                     break;
                 case "Home":
                     InitializeDefaultContent();

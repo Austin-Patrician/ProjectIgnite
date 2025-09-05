@@ -1,12 +1,18 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Input;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Extensions.Logging;
 using ProjectIgnite.Models;
 using ProjectIgnite.Services;
+using ProjectIgnite.Repositories;
+using ProjectIgnite.DTOs;
 
 namespace ProjectIgnite.ViewModels
 {
@@ -17,470 +23,637 @@ namespace ProjectIgnite.ViewModels
     public partial class ProjectStructureViewModel : ViewModelBase
     {
         private readonly IDiagramService _diagramService;
-        private readonly IGitHubService _gitHubService;
-        private readonly IAIService _aiService;
+        private readonly ILogger<ProjectStructureViewModel> _logger;
+        private readonly IProjectRepository _projectRepository;
         private CancellationTokenSource? _cancellationTokenSource;
+        
+        // 新增：渲染Markdown中图像的取消令牌
+        private CancellationTokenSource? _renderCts;
 
         [ObservableProperty]
-        private string _title = "项目结构";
+        private string _selectedProjectPath = string.Empty;
 
         [ObservableProperty]
-        private string _description = "这里将显示项目的文件结构和组织架构";
+        private string _selectedProjectName = string.Empty;
 
         [ObservableProperty]
-        private bool _isLoading = false;
+        private string _currentMermaidCode = string.Empty;
 
         [ObservableProperty]
-        private string _emptyStateMessage = "暂无项目结构数据";
-
-        // 图表功能相关属性
-        [ObservableProperty]
-        private bool _isDiagramMode = false;
+        private string _architectureExplanation = string.Empty;
 
         [ObservableProperty]
-        private string _repositoryUrl = string.Empty;
+        private bool _isAnalyzing = false;
+
+        [ObservableProperty]
+        private bool _hasAnalysisResult = false;
+
+        [ObservableProperty]
+        private double _analysisProgress = 0;
+
+        [ObservableProperty]
+        private string _analysisStatus = string.Empty;
+
+        [ObservableProperty]
+        private string _errorMessage = string.Empty;
 
         [ObservableProperty]
         private string _customInstructions = string.Empty;
 
         [ObservableProperty]
-        private DiagramModel? _currentDiagram;
+        private bool _canExport = false;
 
         [ObservableProperty]
-        private ProjectIgnite.Services.GenerationProgress _generationProgress = new();
+        private bool _canRegenerate = false;
 
         [ObservableProperty]
-        private bool _isGenerating = false;
+        private bool _canAnalyze = false;
 
         [ObservableProperty]
-        private string _mermaidCode = string.Empty;
+        private bool _showMermaidCode = false;
 
         [ObservableProperty]
-        private string _diagramExplanation = string.Empty;
+        private string _markdownContent = string.Empty;
 
+        // 新增：下拉框选中项目的 Id
         [ObservableProperty]
-        private RepositoryInfo? _repositoryInfo;
+        private int? _selectedProjectId;
 
+        // 新增：下拉框选中的项目对象（用于 Avalonia SelectedItem 绑定）
         [ObservableProperty]
-        private bool _showDiagramControls = false;
+        private ProjectSourceInfo? _selectedProject;
 
-        [ObservableProperty]
-        private string _modificationInstructions = string.Empty;
+        public ObservableCollection<ProjectItem> AvailableProjects { get; }
+        // 新增：从仓库加载的“最近/所有”项目列表
+        public ObservableCollection<ProjectSourceInfo> RecentProjects { get; }
+        public ObservableCollection<string> RecentProjectPaths { get; }
 
-        /// <summary>
-        /// 项目结构树节点集合
-        /// </summary>
-        public ObservableCollection<object> StructureItems { get; }
+        // Computed properties for UI state
+        public bool ShowEmptyState => !IsAnalyzing && !HasAnalysisResult && !HasError;
+        public bool HasError => !string.IsNullOrEmpty(ErrorMessage) && !IsAnalyzing;
+        // 更新：根据 RecentProjects 是否有数据控制可见性
+        public bool HasRecentProjects => RecentProjects.Count > 0;
+        public string StatusText => IsAnalyzing ? "Analyzing..." : HasAnalysisResult ? "Ready" : "Idle";
+        public string ProgressText => AnalysisStatus;
+        public double ProgressPercentage => AnalysisProgress;
+        public DateTime? LastAnalysisTime => HasAnalysisResult ? DateTime.Now : null; // This should be stored properly
 
-        /// <summary>
-        /// 刷新命令
-        /// </summary>
-        public IRelayCommand RefreshCommand { get; }
 
-        /// <summary>
-        /// 展开所有节点命令
-        /// </summary>
-        public IRelayCommand ExpandAllCommand { get; }
 
-        /// <summary>
-        /// 折叠所有节点命令
-        /// </summary>
-        public IRelayCommand CollapseAllCommand { get; }
+        public ICommand BrowseProjectCommand { get; }
+        public ICommand AnalyzeProjectCommand { get; }
+        public ICommand RegenerateAnalysisCommand { get; }
+        public ICommand ExportMermaidCommand { get; }
+        public ICommand ExportPngCommand { get; }
+        public ICommand LoadSavedAnalysisCommand { get; }
+        public ICommand CancelAnalysisCommand { get; }
+        public ICommand ClearResultsCommand { get; }
+        public ICommand ToggleMermaidCodeCommand { get; }
 
-        // 图表功能命令
-        /// <summary>
-        /// 切换模式命令（结构视图/图表视图）
-        /// </summary>
-        public IRelayCommand ToggleModeCommand { get; }
-
-        /// <summary>
-        /// 生成图表命令
-        /// </summary>
-        public IRelayCommand GenerateDiagramCommand { get; }
-
-        /// <summary>
-        /// 取消生成命令
-        /// </summary>
-        public IRelayCommand CancelGenerationCommand { get; }
-
-        /// <summary>
-        /// 修改图表命令
-        /// </summary>
-        public IRelayCommand ModifyDiagramCommand { get; }
-
-        /// <summary>
-        /// 导出图表命令
-        /// </summary>
-        public IRelayCommand<string> ExportDiagramCommand { get; }
-
-        /// <summary>
-        /// 复制图表代码命令
-        /// </summary>
-        public IRelayCommand CopyDiagramCodeCommand { get; }
-
-        /// <summary>
-        /// 清除图表命令
-        /// </summary>
-        public IRelayCommand ClearDiagramCommand { get; }
-
-        public ProjectStructureViewModel(
-            IDiagramService diagramService,
-            IGitHubService gitHubService,
-            IAIService aiService)
+        public ProjectStructureViewModel(IDiagramService diagramService, ILogger<ProjectStructureViewModel> logger, IProjectRepository projectRepository)
         {
-            _diagramService = diagramService;
-            _gitHubService = gitHubService;
-            _aiService = aiService;
-            
-            StructureItems = new ObservableCollection<object>();
-            
+            _diagramService = diagramService ?? throw new ArgumentNullException(nameof(diagramService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _projectRepository = projectRepository ?? throw new ArgumentNullException(nameof(projectRepository));
+
+            AvailableProjects = new ObservableCollection<ProjectItem>();
+            RecentProjects = new ObservableCollection<ProjectSourceInfo>();
+            RecentProjectPaths = new ObservableCollection<string>();
+
             // 初始化命令
-            RefreshCommand = new RelayCommand(RefreshStructure);
-            ExpandAllCommand = new RelayCommand(ExpandAll);
-            CollapseAllCommand = new RelayCommand(CollapseAll);
-            
-            // 初始化图表功能命令
-            ToggleModeCommand = new RelayCommand(ToggleMode);
-            GenerateDiagramCommand = new RelayCommand(GenerateDiagram, CanGenerateDiagram);
-            CancelGenerationCommand = new RelayCommand(CancelGeneration, () => IsGenerating);
-            ModifyDiagramCommand = new RelayCommand(ModifyDiagram, CanModifyDiagram);
-            ExportDiagramCommand = new RelayCommand<string>(ExportDiagram, CanExportDiagram);
-            CopyDiagramCodeCommand = new RelayCommand(CopyDiagramCode, CanCopyDiagramCode);
-            ClearDiagramCommand = new RelayCommand(ClearDiagram, CanClearDiagram);
+            BrowseProjectCommand = new AsyncRelayCommand(BrowseProjectAsync);
+            AnalyzeProjectCommand = new AsyncRelayCommand(AnalyzeProjectAsync, () => CanAnalyze);
+            RegenerateAnalysisCommand = new AsyncRelayCommand(RegenerateAnalysisAsync, () => CanRegenerate);
+            ExportMermaidCommand = new AsyncRelayCommand(ExportMermaidAsync, () => CanExport);
+            ExportPngCommand = new AsyncRelayCommand(ExportPngAsync, () => CanExport);
+            LoadSavedAnalysisCommand = new AsyncRelayCommand(LoadSavedAnalysisAsync);
+            CancelAnalysisCommand = new RelayCommand(CancelAnalysis, () => IsAnalyzing);
+            ClearResultsCommand = new RelayCommand(ClearResults, () => HasAnalysisResult);
+            ToggleMermaidCodeCommand = new RelayCommand(() => ShowMermaidCode = !ShowMermaidCode);
 
-            // 设置初始状态为非加载状态，确保空状态可见
-            IsLoading = false;
-            EmptyStateMessage = "点击刷新按钮加载项目结构";
-            
-            // 监听属性变化以更新命令状态
-            PropertyChanged += OnPropertyChanged;
+            // 初始化时加载可用项目（本地扫描逻辑保留）
+            _ = Task.Run(LoadAvailableProjectsAsync);
+            // 新增：从仓库加载项目列表用于下拉框
+            _ = Task.Run(LoadRecentProjectsAsync);
         }
 
-        /// <summary>
-        /// 异步初始化
-        /// </summary>
-        private async void InitializeAsync()
+        partial void OnSelectedProjectPathChanged(string value)
         {
-            await LoadStructureDataAsync();
+            UpdateCommandStates();
+            if (!string.IsNullOrEmpty(value))
+            {
+                SelectedProjectName = Path.GetFileName(value);
+                _ = Task.Run(() => LoadSavedAnalysisAsync());
+            }
         }
 
-        /// <summary>
-        /// 加载项目结构数据
-        /// </summary>
-        private async Task LoadStructureDataAsync()
+        // 新增：当下拉框选中项目 Id 变化时，同步路径和名称
+        partial void OnSelectedProjectIdChanged(int? value)
         {
-            IsLoading = true;
-            
             try
             {
-                // TODO: 实现项目结构数据加载逻辑
-                // 这里暂时留空，等待后续实现
-                await Task.Delay(100); // 模拟异步操作
-                
-                // 暂时清空集合，显示空状态
-                StructureItems.Clear();
-            }
-            catch (Exception ex)
-            {
-                // TODO: 添加错误处理和日志记录
-                EmptyStateMessage = $"加载项目结构时出错: {ex.Message}";
-            }
-            finally
-            {
-                IsLoading = false;
-            }
-        }
-
-        /// <summary>
-        /// 刷新项目结构
-        /// </summary>
-        private async void RefreshStructure()
-        {
-            await LoadStructureDataAsync();
-        }
-
-        /// <summary>
-        /// 展开所有节点
-        /// </summary>
-        private void ExpandAll()
-        {
-            // TODO: 实现展开所有节点的逻辑
-        }
-
-        /// <summary>
-        /// 折叠所有节点
-        /// </summary>
-        private void CollapseAll()
-        {
-            // TODO: 实现折叠所有节点的逻辑
-        }
-
-        #region 图表功能方法
-
-        /// <summary>
-        /// 属性变化事件处理
-        /// </summary>
-        private void OnPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            // 更新命令的可执行状态
-            switch (e.PropertyName)
-            {
-                case nameof(RepositoryUrl):
-                case nameof(IsGenerating):
-                    GenerateDiagramCommand.NotifyCanExecuteChanged();
-                    CancelGenerationCommand.NotifyCanExecuteChanged();
-                    break;
-                case nameof(CurrentDiagram):
-                case nameof(MermaidCode):
-                    ModifyDiagramCommand.NotifyCanExecuteChanged();
-                    ExportDiagramCommand.NotifyCanExecuteChanged();
-                    CopyDiagramCodeCommand.NotifyCanExecuteChanged();
-                    ClearDiagramCommand.NotifyCanExecuteChanged();
-                    break;
-            }
-        }
-
-        /// <summary>
-        /// 切换模式（结构视图/图表视图）
-        /// </summary>
-        private void ToggleMode()
-        {
-            IsDiagramMode = !IsDiagramMode;
-            Title = IsDiagramMode ? "架构图表" : "项目结构";
-            Description = IsDiagramMode ? "生成和查看项目架构图表" : "这里将显示项目的文件结构和组织架构";
-        }
-
-        /// <summary>
-        /// 生成图表
-        /// </summary>
-        private async void GenerateDiagram()
-        {
-            if (IsGenerating) return;
-
-            try
-            {
-                IsGenerating = true;
-                _cancellationTokenSource = new CancellationTokenSource();
-                GenerationProgress.Reset();
-                ShowDiagramControls = false;
-
-                var progressReporter = new Progress<ProjectIgnite.Services.GenerationProgress>(progress => 
+                if (value.HasValue)
                 {
-                    GenerationProgress = progress;
-                });
-
-                var result = await _diagramService.GenerateDiagramAsync(
-                    RepositoryUrl,
-                    CustomInstructions,
-                    progressReporter,
-                    _cancellationTokenSource.Token);
-
-                if (result.IsSuccess && !string.IsNullOrEmpty(result.MermaidCode))
-                {
-                    // 创建 DiagramModel 对象
-                    CurrentDiagram = new DiagramModel
+                    var proj = RecentProjects.FirstOrDefault(p => p.Id == value.Value);
+                    if (proj != null)
                     {
-                        Id = Guid.NewGuid().ToString(),
-                        RepositoryUrl = RepositoryUrl,
-                        MermaidCode = result.MermaidCode,
-                        Explanation = result.Explanation ?? string.Empty,
-                        ComponentMapping = result.ComponentMapping != null ? 
-                            System.Text.Json.JsonSerializer.Serialize(result.ComponentMapping) : 
-                            System.Text.Json.JsonSerializer.Serialize(new Dictionary<string, string>()),
-                        Title = $"架构图表",
-                        Description = "项目架构图表",
-                        CreatedAt = DateTime.UtcNow,
-                        UpdatedAt = DateTime.UtcNow,
-                        Version = 1
-                    };
-                    MermaidCode = result.MermaidCode;
-                    DiagramExplanation = result.Explanation ?? string.Empty;
-                    RepositoryInfo = await _gitHubService.GetRepositoryInfoAsync(RepositoryUrl, _cancellationTokenSource.Token);
-                    ShowDiagramControls = true;
+                        // 同步选中对象，触发 OnSelectedProjectChanged 派生逻辑
+                        SelectedProject = proj;
+                        SelectedProjectPath = proj.LocalPath ?? string.Empty;
+                        SelectedProjectName = proj.Name ?? string.Empty;
+                    }
                 }
-                else
-                {
-                    GenerationProgress.SetError(result.ErrorMessage ?? "生成图表失败");
-                }
-            }
-            catch (OperationCanceledException)
-            {
-                GenerationProgress.SetCancelled();
             }
             catch (Exception ex)
             {
-                GenerationProgress.SetError($"生成图表时发生错误: {ex.Message}");
+                _logger.LogWarning(ex, "处理选中项目时发生错误");
             }
-            finally
+        }
+
+        partial void OnSelectedProjectChanged(ProjectSourceInfo? value)
+        {
+            try
             {
-                IsGenerating = false;
-                _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource = null;
+                if (value != null)
+                {
+                    // 同步派生字段
+                    SelectedProjectId = value.Id;
+                    SelectedProjectPath = value.LocalPath ?? string.Empty;
+                    SelectedProjectName = value.Name ?? string.Empty;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "处理 SelectedProject 变更时发生错误");
             }
         }
 
-        /// <summary>
-        /// 取消生成
-        /// </summary>
-        private void CancelGeneration()
+        partial void OnIsAnalyzingChanged(bool value)
         {
-            _cancellationTokenSource?.Cancel();
+            UpdateCommandStates();
         }
 
-        /// <summary>
-        /// 修改图表
-        /// </summary>
-        private async void ModifyDiagram()
+        partial void OnHasAnalysisResultChanged(bool value)
         {
-            if (CurrentDiagram == null || string.IsNullOrWhiteSpace(ModificationInstructions)) return;
+            UpdateCommandStates();
+        }
+
+        private void UpdateCommandStates()
+        {
+            CanAnalyze = !string.IsNullOrEmpty(SelectedProjectPath) && !IsAnalyzing && Directory.Exists(SelectedProjectPath);
+            CanRegenerate = CanAnalyze && HasAnalysisResult;
+            CanExport = HasAnalysisResult && !string.IsNullOrEmpty(CurrentMermaidCode);
+
+            // 通知命令状态更新
+            ((AsyncRelayCommand)AnalyzeProjectCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)RegenerateAnalysisCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)ExportMermaidCommand).NotifyCanExecuteChanged();
+            ((AsyncRelayCommand)ExportPngCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)CancelAnalysisCommand).NotifyCanExecuteChanged();
+            ((RelayCommand)ClearResultsCommand).NotifyCanExecuteChanged();
+        }
+
+        // 向视图发出请求：打开文件夹选择对话框
+        public event Action? RequestBrowseProjectFolder;
+
+        private async Task BrowseProjectAsync()
+        {
+            try
+            {
+                // 通过事件让 View 弹出文件夹选择对话框，并在 View 侧设置 SelectedProjectPath
+                _logger.LogInformation("请求浏览项目文件夹");
+                RequestBrowseProjectFolder?.Invoke();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "浏览项目文件夹时发生错误");
+                ErrorMessage = $"浏览文件夹失败: {ex.Message}";
+            }
+        }
+
+        private async Task AnalyzeProjectAsync()
+        {
+            if (!CanAnalyze) return;
 
             try
             {
-                IsGenerating = true;
+                _cancellationTokenSource?.Cancel();
                 _cancellationTokenSource = new CancellationTokenSource();
-                GenerationProgress.Reset();
-                GenerationProgress.Update(GenerationState.GeneratingDiagram, 50, "正在修改图表...");
 
-                var modifiedCode = await _diagramService.ModifyDiagramAsync(
-                    CurrentDiagram.MermaidCode,
-                    ModificationInstructions,
+                IsAnalyzing = true;
+                HasAnalysisResult = false;
+                ErrorMessage = string.Empty;
+                AnalysisProgress = 0;
+                AnalysisStatus = "开始分析...";
+
+                _logger.LogInformation("开始分析项目: {ProjectPath}", SelectedProjectPath);
+
+                // 创建进度报告器
+                var progress = new Progress<Services.GenerationProgress>(OnAnalysisProgressChanged);
+
+                // 执行分析
+                var result = await _diagramService.AnalyzeLocalProjectAsync(
+                    SelectedProjectPath,
+                    SelectedProjectName,
+                    string.IsNullOrWhiteSpace(CustomInstructions) ? null : CustomInstructions,
+                    progress,
                     _cancellationTokenSource.Token);
 
-                if (!string.IsNullOrEmpty(modifiedCode))
+                if (result.IsSuccess)
                 {
-                    CurrentDiagram.MermaidCode = modifiedCode;
-                    MermaidCode = modifiedCode;
-                    ModificationInstructions = string.Empty; // 清空修改指令
-                    GenerationProgress.Update(GenerationState.Completed, 100, "图表修改完成");
+                    CurrentMermaidCode = result.MermaidCode ?? string.Empty;
+                    ArchitectureExplanation = result.Explanation ?? string.Empty;
+                    HasAnalysisResult = true;
+                    AnalysisStatus = "分析完成";
+
+                    // 添加到最近项目列表（保留原有路径历史逻辑）
+                    AddToRecentProjects(SelectedProjectPath);
+
+                    _logger.LogInformation("项目分析成功: {ProjectName}", SelectedProjectName);
                 }
                 else
                 {
-                    GenerationProgress.SetError("修改图表失败");
+                    ErrorMessage = result.ErrorMessage ?? "分析失败";
+                    AnalysisStatus = "分析失败";
+                    _logger.LogWarning("项目分析失败: {ProjectPath}, 错误: {Error}", SelectedProjectPath, result.ErrorMessage);
                 }
             }
             catch (OperationCanceledException)
             {
-                GenerationProgress.SetCancelled();
+                AnalysisStatus = "分析已取消";
+                _logger.LogInformation("项目分析被取消: {ProjectPath}", SelectedProjectPath);
             }
             catch (Exception ex)
             {
-                GenerationProgress.SetError($"修改图表时发生错误: {ex.Message}");
+                ErrorMessage = $"分析过程中发生错误: {ex.Message}";
+                AnalysisStatus = "分析错误";
+                _logger.LogError(ex, "项目分析时发生错误: {ProjectPath}", SelectedProjectPath);
             }
             finally
             {
-                IsGenerating = false;
-                _cancellationTokenSource?.Dispose();
-                _cancellationTokenSource = null;
+                IsAnalyzing = false;
+                AnalysisProgress = 100;
             }
         }
 
-        /// <summary>
-        /// 导出图表
-        /// </summary>
-        private async void ExportDiagram(string? format)
+        private async Task RegenerateAnalysisAsync()
         {
-            if (CurrentDiagram == null || string.IsNullOrEmpty(format)) return;
+            if (!CanRegenerate) return;
 
             try
             {
-                if (Enum.TryParse<ExportFormat>(format, true, out var exportFormat))
+                _logger.LogInformation("重新生成分析: {ProjectPath}", SelectedProjectPath);
+
+                // 清除当前结果
+                ClearResults();
+
+                // 重新分析
+                await AnalyzeProjectAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "重新生成分析时发生错误: {ProjectPath}", SelectedProjectPath);
+                ErrorMessage = $"重新分析失败: {ex.Message}";
+            }
+        }
+
+        private async Task ExportMermaidAsync()
+        {
+            if (!CanExport) return;
+
+            try
+            {
+                _logger.LogInformation("导出Mermaid文件: {ProjectName}", SelectedProjectName);
+
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var fileName = $"{SelectedProjectName}_diagram.mermaid";
+                var outputPath = Path.Combine(documentsPath, fileName);
+
+                await _diagramService.ExportDiagramAsync(
+                    CurrentMermaidCode,
+                    ExportFormat.Mermaid,
+                    outputPath,
+                    CancellationToken.None);
+
+                AnalysisStatus = $"Mermaid文件已导出到: {outputPath}";
+                _logger.LogInformation("Mermaid文件导出成功: {OutputPath}", outputPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "导出Mermaid文件时发生错误");
+                ErrorMessage = $"导出失败: {ex.Message}";
+            }
+        }
+
+        private async Task ExportPngAsync()
+        {
+            if (!CanExport) return;
+
+            try
+            {
+                _logger.LogInformation("导出PNG文件: {ProjectName}", SelectedProjectName);
+
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var fileName = $"{SelectedProjectName}_diagram.png";
+                var outputPath = Path.Combine(documentsPath, fileName);
+
+                await _diagramService.ExportDiagramAsync(
+                    CurrentMermaidCode,
+                    ExportFormat.Png,
+                    outputPath,
+                    CancellationToken.None);
+
+                AnalysisStatus = $"PNG文件已导出到: {outputPath}";
+                _logger.LogInformation("PNG文件导出成功: {OutputPath}", outputPath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "导出PNG文件时发生错误");
+                ErrorMessage = $"导出失败: {ex.Message}";
+            }
+        }
+
+        private async Task LoadSavedAnalysisAsync()
+        {
+            if (string.IsNullOrEmpty(SelectedProjectPath)) return;
+
+            try
+            {
+                _logger.LogInformation("加载已保存的分析结果: {ProjectPath}", SelectedProjectPath);
+
+                var savedResult = await _diagramService.GetSavedAnalysisAsync(SelectedProjectPath);
+                if (savedResult != null && savedResult.IsSuccess)
                 {
-                    await _diagramService.ExportDiagramAsync(CurrentDiagram.MermaidCode, exportFormat);
+                    CurrentMermaidCode = savedResult.MermaidCode ?? string.Empty;
+                    ArchitectureExplanation = savedResult.Explanation ?? string.Empty;
+                    HasAnalysisResult = true;
+                    AnalysisStatus = "已加载保存的分析结果";
+
+                    _logger.LogInformation("成功加载保存的分析结果: {ProjectPath}", SelectedProjectPath);
+                }
+                else
+                {
+                    // 清除之前的结果
+                    ClearResults();
+                    AnalysisStatus = "未找到保存的分析结果";
                 }
             }
             catch (Exception ex)
             {
-                // TODO: 显示错误消息给用户
-                System.Diagnostics.Debug.WriteLine($"导出图表失败: {ex.Message}");
+                _logger.LogWarning(ex, "加载保存的分析结果时发生错误: {ProjectPath}", SelectedProjectPath);
+                ClearResults();
             }
         }
 
-        /// <summary>
-        /// 复制图表代码
-        /// </summary>
-        private async void CopyDiagramCode()
+        private void CancelAnalysis()
         {
-            if (string.IsNullOrEmpty(MermaidCode)) return;
+            if (IsAnalyzing)
+            {
+                _cancellationTokenSource?.Cancel();
+                AnalysisStatus = "正在取消分析...";
+                _logger.LogInformation("用户取消分析: {ProjectPath}", SelectedProjectPath);
+            }
+        }
 
+        private void ClearResults()
+        {
+            CurrentMermaidCode = string.Empty;
+            ArchitectureExplanation = string.Empty;
+            HasAnalysisResult = false;
+            ErrorMessage = string.Empty;
+            AnalysisProgress = 0;
+            AnalysisStatus = string.Empty;
+        }
+
+        private void OnAnalysisProgressChanged(ProjectIgnite.Services.GenerationProgress progress)
+        {
+            AnalysisProgress = progress.Percentage;
+            AnalysisStatus = progress.Message;
+
+            if (!string.IsNullOrEmpty(progress.ErrorMessage))
+            {
+                ErrorMessage = progress.ErrorMessage;
+            }
+        }
+
+        private async Task LoadAvailableProjectsAsync()
+        {
             try
             {
-                // TODO: 实现复制到剪贴板功能
-                // await Clipboard.SetTextAsync(MermaidCode);
-                System.Diagnostics.Debug.WriteLine("图表代码已复制到剪贴板");
+                await Task.Delay(100); // 模拟异步操作
+
+                // 加载Documents下的ProjectIgnite项目
+                var documentsPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var projectIgnitePath = Path.Combine(documentsPath, "ProjectIgnite");
+
+                if (Directory.Exists(projectIgnitePath))
+                {
+                    var projectDirs = Directory.GetDirectories(projectIgnitePath)
+                        .Where(dir => !Path.GetFileName(dir).Equals("Diagrams", StringComparison.OrdinalIgnoreCase))
+                        .Take(10); // 限制数量
+
+                    foreach (var projectDir in projectDirs)
+                    {
+                        var projectName = Path.GetFileName(projectDir);
+                        AvailableProjects.Add(new ProjectItem
+                        {
+                            Name = projectName,
+                            Path = projectDir,
+                            LastModified = Directory.GetLastWriteTime(projectDir)
+                        });
+                    }
+                }
+
+                _logger.LogInformation("加载了 {Count} 个可用项目", AvailableProjects.Count);
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"复制失败: {ex.Message}");
+                _logger.LogWarning(ex, "加载可用项目时发生错误");
             }
         }
 
-        /// <summary>
-        /// 清除图表
-        /// </summary>
-        private void ClearDiagram()
+        // 新增：从仓库加载“最近/全部”项目列表
+        private async Task LoadRecentProjectsAsync()
         {
-            CurrentDiagram = null;
-            MermaidCode = string.Empty;
-            DiagramExplanation = string.Empty;
-            RepositoryInfo = null;
-            ShowDiagramControls = false;
-            GenerationProgress.Reset();
-            ModificationInstructions = string.Empty;
+            try
+            {
+                var projects = await _projectRepository.GetAllProjectsAsync();
+                RecentProjects.Clear();
+                foreach (var p in projects)
+                {
+                    RecentProjects.Add(p);
+                }
+                // 通知 UI 更新 HasRecentProjects 相关依赖
+                OnPropertyChanged(nameof(HasRecentProjects));
+                _logger.LogInformation("从仓库加载了 {Count} 个项目", RecentProjects.Count);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "从仓库加载项目时发生错误");
+            }
         }
 
-        #endregion
-
-        #region 命令可执行状态判断
-
-        /// <summary>
-        /// 判断是否可以生成图表
-        /// </summary>
-        private bool CanGenerateDiagram()
+        private void AddToRecentProjects(string projectPath)
         {
-            return !IsGenerating && !string.IsNullOrWhiteSpace(RepositoryUrl);
+            try
+            {
+                // 移除重复项
+                while (RecentProjectPaths.Contains(projectPath))
+                {
+                    RecentProjectPaths.Remove(projectPath);
+                }
+
+                // 添加到最前面
+                RecentProjectPaths.Insert(0, projectPath);
+
+                // 限制数量
+                while (RecentProjectPaths.Count > 10)
+                {
+                    RecentProjectPaths.RemoveAt(RecentProjectPaths.Count - 1);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "添加到最近项目列表时发生错误");
+            }
         }
 
-        /// <summary>
-        /// 判断是否可以修改图表
-        /// </summary>
-        private bool CanModifyDiagram()
+
+
+        partial void OnCurrentMermaidCodeChanged(string value)
         {
-            return !IsGenerating && CurrentDiagram != null && !string.IsNullOrWhiteSpace(ModificationInstructions);
+            UpdateMarkdownContent();
         }
 
-        /// <summary>
-        /// 判断是否可以导出图表
-        /// </summary>
-        private bool CanExportDiagram(string? format)
+        partial void OnArchitectureExplanationChanged(string value)
         {
-            return CurrentDiagram != null && !string.IsNullOrEmpty(format);
+            UpdateMarkdownContent();
         }
 
-        /// <summary>
-        /// 判断是否可以复制图表代码
-        /// </summary>
-        private bool CanCopyDiagramCode()
+        private void UpdateMarkdownContent()
         {
-            return !string.IsNullOrEmpty(MermaidCode);
+            // CurrentMermaidCode 现在包含完整的 Markdown 内容（架构说明 + Mermaid 图表）
+            if (!string.IsNullOrEmpty(CurrentMermaidCode))
+            {
+                MarkdownContent = CurrentMermaidCode;
+            }
+            else if (!string.IsNullOrEmpty(ArchitectureExplanation))
+            {
+                // 兼容旧版本：如果只有架构说明，则显示架构说明
+                MarkdownContent = $"## 项目架构说明\n\n{ArchitectureExplanation}";
+            }
+            else
+            {
+                MarkdownContent = string.Empty;
+            }
+        
+            // 异步渲染 mermaid -> SVG 并以 data URI 嵌入，渲染完成后再更新 Markdown
+            StartRebuildMarkdownWithImageAsync();
         }
-
-        /// <summary>
-        /// 判断是否可以清除图表
-        /// </summary>
-        private bool CanClearDiagram()
+        
+        private void StartRebuildMarkdownWithImageAsync()
         {
-            return CurrentDiagram != null;
+            if (string.IsNullOrEmpty(CurrentMermaidCode)) return;
+        
+            // 取消上一次渲染
+            _renderCts?.Cancel();
+            _renderCts?.Dispose();
+            _renderCts = new CancellationTokenSource();
+            var token = _renderCts.Token;
+        
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    // 从 Markdown 内容中提取 Mermaid 代码块
+                    var mermaidCode = ExtractMermaidCodeFromMarkdown(CurrentMermaidCode);
+                    if (string.IsNullOrEmpty(mermaidCode))
+                    {
+                        // 如果没有找到 Mermaid 代码块，直接返回
+                        return;
+                    }
+        
+                    // 调用图表服务渲染为 SVG
+                    var bytes = await _diagramService.ExportDiagramAsync(
+                        mermaidCode,
+                        ExportFormat.Svg,
+                        outputPath: null!,
+                        cancellationToken: token);
+        
+                    if (token.IsCancellationRequested) return;
+        
+                    var base64 = Convert.ToBase64String(bytes);
+                    
+                    // 替换 Markdown 中的 Mermaid 代码块为图像
+                    var updatedMarkdown = ReplaceMermaidCodeWithImage(CurrentMermaidCode, base64);
+        
+                    // 更新到 UI
+                    MarkdownContent = updatedMarkdown;
+                }
+                catch (OperationCanceledException)
+                {
+                    // 忽略取消
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "内联渲染 Mermaid 图像失败，保留代码围栏显示");
+                    // 失败时保留已有的围栏版本，不抛出错误
+                }
+            }, token);
         }
-
-        #endregion
-
-        /// <summary>
-        /// 释放资源
-        /// </summary>
-        public void Dispose()
+        
+        private string ExtractMermaidCodeFromMarkdown(string markdown)
         {
-            _cancellationTokenSource?.Cancel();
-            _cancellationTokenSource?.Dispose();
+            var startPattern = "```mermaid";
+            var endPattern = "```";
+            
+            var startIndex = markdown.IndexOf(startPattern, StringComparison.OrdinalIgnoreCase);
+            if (startIndex == -1) return string.Empty;
+            
+            startIndex += startPattern.Length;
+            var endIndex = markdown.IndexOf(endPattern, startIndex);
+            if (endIndex == -1) return string.Empty;
+            
+            return markdown.Substring(startIndex, endIndex - startIndex).Trim();
         }
+        
+        private string ReplaceMermaidCodeWithImage(string markdown, string base64Image)
+        {
+            var startPattern = "```mermaid";
+            var endPattern = "```";
+            
+            var startIndex = markdown.IndexOf(startPattern, StringComparison.OrdinalIgnoreCase);
+            if (startIndex == -1) return markdown;
+            
+            var endIndex = markdown.IndexOf(endPattern, startIndex + startPattern.Length);
+            if (endIndex == -1) return markdown;
+            
+            endIndex += endPattern.Length;
+            
+            var beforeCode = markdown.Substring(0, startIndex);
+            var afterCode = markdown.Substring(endIndex);
+            var imageMarkdown = $"![项目结构图](data:image/svg+xml;base64,{base64Image})";
+            
+            return beforeCode + imageMarkdown + afterCode;
+        }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource?.Dispose();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 项目项
+    /// </summary>
+    public class ProjectItem
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Path { get; set; } = string.Empty;
+        public DateTime LastModified { get; set; }
+        public string DisplayText => $"{Name} ({LastModified:yyyy-MM-dd})";
     }
 }

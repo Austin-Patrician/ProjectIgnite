@@ -18,6 +18,7 @@ namespace ProjectIgnite.ViewModels
     {
         private readonly IGitService _gitService;
         private readonly ILinguistService _linguistService;
+        private readonly IDiagramService _diagramService;
         private readonly CloneRequest _cloneRequest;
         private readonly ProjectSourceInfo _projectInfo;
         private CancellationTokenSource _cancellationTokenSource;
@@ -42,11 +43,12 @@ namespace ProjectIgnite.ViewModels
         private string _errorMessage = string.Empty;
         private DateTime _startTime;
 
-        public CloneProgressViewModel(IGitService gitService, ILinguistService linguistService, 
-            CloneRequest cloneRequest, ProjectSourceInfo projectInfo)
+        public CloneProgressViewModel(IGitService gitService, ILinguistService linguistService,
+            IDiagramService diagramService, CloneRequest cloneRequest, ProjectSourceInfo projectInfo)
         {
             _gitService = gitService;
             _linguistService = linguistService;
+            _diagramService = diagramService;
             _cloneRequest = cloneRequest;
             _projectInfo = projectInfo;
             _cancellationTokenSource = new CancellationTokenSource();
@@ -293,15 +295,18 @@ namespace ProjectIgnite.ViewModels
                 }
                 
                 // 克隆完成，开始语言分析（如果需要）
-                if (_projectInfo.AutoAnalyze)
+                if (_cloneRequest.AutoAnalyze)
                 {
                     await PerformLanguageAnalysisAsync();
+                    
+                    // 进行AI项目结构分析
+                    await PerformProjectStructureAnalysisAsync();
                 }
                 
                 // 完成
                 IsCompleted = true;
                 OverallProgress = 100;
-                CurrentStatus = "克隆完成";
+                CurrentStatus = _cloneRequest.AutoAnalyze ? "克隆和分析完成" : "克隆完成";
             }
             catch (OperationCanceledException)
             {
@@ -347,21 +352,88 @@ namespace ProjectIgnite.ViewModels
                 {
                     var mainLanguage = analysisResult.Languages?.FirstOrDefault();
                     AnalysisStatus = mainLanguage != null 
-                        ? $"分析完成，主要语言：{mainLanguage.Value.Value} ({mainLanguage.Value.Key:F1}%)"
-                        : "分析完成";
+                        ? $"语言分析完成，主要语言：{mainLanguage.Value.Value} ({mainLanguage.Value.Key:F1}%)"
+                        : "语言分析完成";
                 }
                 else
                 {
-                    AnalysisStatus = $"分析失败：{analysisResult.ErrorMessage}";
+                    AnalysisStatus = $"语言分析失败：{analysisResult.ErrorMessage}";
                 }
             }
             catch (Exception ex)
             {
-                AnalysisStatus = $"分析过程中发生错误：{ex.Message}";
+                AnalysisStatus = $"语言分析过程中发生错误：{ex.Message}";
+            }
+            finally
+            {
+                // 不在这里设置 IsAnalyzing = false，因为还有AI分析
+            }
+        }
+
+        private async Task PerformProjectStructureAnalysisAsync()
+        {
+            try
+            {
+                AnalysisStatus = "正在进行AI项目结构分析...";
+                OverallProgress = 85; // 更新进度到85%
+
+                // 创建进度报告器
+                var progress = new Progress<ProjectIgnite.Services.GenerationProgress>(OnAIAnalysisProgressChanged);
+
+                // 执行AI分析
+                var analysisResult = await _diagramService.AnalyzeLocalProjectAsync(
+                    LocalPath,
+                    ProjectName,
+                    customInstructions: null,
+                    progress: progress,
+                    cancellationToken: _cancellationTokenSource.Token);
+
+                if (_cancellationTokenSource.Token.IsCancellationRequested)
+                {
+                    AnalysisStatus = "AI分析已取消";
+                    return;
+                }
+
+                if (analysisResult.IsSuccess)
+                {
+                    AnalysisStatus = "AI项目结构分析完成，Mermaid图表已生成";
+                    OverallProgress = 100;
+                }
+                else
+                {
+                    AnalysisStatus = $"AI分析失败：{analysisResult.ErrorMessage}";
+                    OverallProgress = 100;
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                AnalysisStatus = "AI分析已取消";
+            }
+            catch (Exception ex)
+            {
+                AnalysisStatus = $"AI分析过程中发生错误：{ex.Message}";
+                OverallProgress = 100;
             }
             finally
             {
                 IsAnalyzing = false;
+            }
+        }
+
+        private void OnAIAnalysisProgressChanged(GenerationProgress progress)
+        {
+            // 将AI分析进度映射到整体进度的85-100%范围
+            var aiProgressRange = 15; // AI分析占用15%的进度空间
+            var mappedProgress = 85 + (progress.Percentage / 100.0 * aiProgressRange);
+            OverallProgress = Math.Min(mappedProgress, 100);
+
+            // 更新分析状态
+            AnalysisStatus = progress.Message;
+
+            // 如果有错误，显示错误信息
+            if (!string.IsNullOrEmpty(progress.ErrorMessage))
+            {
+                AnalysisStatus = $"AI分析错误：{progress.ErrorMessage}";
             }
         }
 

@@ -15,14 +15,18 @@
   </ItemGroup>
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Import Project="$(NuGetPackageRoot)skiasharp.nativeassets.webassembly\2.88.9\buildTransitive\netstandard1.0\SkiaSharp.NativeAssets.WebAssembly.props" Condition="Exists('$(NuGetPackageRoot)skiasharp.nativeassets.webassembly\2.88.9\buildTransitive\netstandard1.0\SkiaSharp.NativeAssets.WebAssembly.props')" />
-    <Import Project="$(NuGetPackageRoot)microsoft.entityframeworkcore\9.0.0\buildTransitive\net8.0\Microsoft.EntityFrameworkCore.props" Condition="Exists('$(NuGetPackageRoot)microsoft.entityframeworkcore\9.0.0\buildTransitive\net8.0\Microsoft.EntityFrameworkCore.props')" />
-    <Import Project="$(NuGetPackageRoot)microsoft.codeanalysis.analyzers\3.3.4\buildTransitive\Microsoft.CodeAnalysis.Analyzers.props" Condition="Exists('$(NuGetPackageRoot)microsoft.codeanalysis.analyzers\3.3.4\buildTransitive\Microsoft.CodeAnalysis.Analyzers.props')" />
-    <Import Project="$(NuGetPackageRoot)microsoft.entityframeworkcore.design\9.0.0\build\net8.0\Microsoft.EntityFrameworkCore.Design.props" Condition="Exists('$(NuGetPackageRoot)microsoft.entityframeworkcore.design\9.0.0\build\net8.0\Microsoft.EntityFrameworkCore.Design.props')" />
-    <Import Project="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly\7.3.0.3\buildTransitive\netstandard1.0\HarfBuzzSharp.NativeAssets.WebAssembly.props" Condition="Exists('$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly\7.3.0.3\buildTransitive\netstandard1.0\HarfBuzzSharp.NativeAssets.WebAssembly.props')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.entityframeworkcore\8.0.0\buildTransitive\net8.0\Microsoft.EntityFrameworkCore.props" Condition="Exists('$(NuGetPackageRoot)microsoft.entityframeworkcore\8.0.0\buildTransitive\net8.0\Microsoft.EntityFrameworkCore.props')" />
+    <Import Project="$(NuGetPackageRoot)microsoft.entityframeworkcore.design\8.0.0\build\net8.0\Microsoft.EntityFrameworkCore.Design.props" Condition="Exists('$(NuGetPackageRoot)microsoft.entityframeworkcore.design\8.0.0\build\net8.0\Microsoft.EntityFrameworkCore.Design.props')" />
     <Import Project="$(NuGetPackageRoot)avalonia\11.2.7\buildTransitive\Avalonia.props" Condition="Exists('$(NuGetPackageRoot)avalonia\11.2.7\buildTransitive\Avalonia.props')" />
+    <Import Project="$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly\7.3.0.3\buildTransitive\netstandard1.0\HarfBuzzSharp.NativeAssets.WebAssembly.props" Condition="Exists('$(NuGetPackageRoot)harfbuzzsharp.nativeassets.webassembly\7.3.0.3\buildTransitive\netstandard1.0\HarfBuzzSharp.NativeAssets.WebAssembly.props')" />
+    <Import Project="$(NuGetPackageRoot)chromiumembeddedframework.runtime\120.1.8\buildTransitive\chromiumembeddedframework.runtime.props" Condition="Exists('$(NuGetPackageRoot)chromiumembeddedframework.runtime\120.1.8\buildTransitive\chromiumembeddedframework.runtime.props')" />
+    <Import Project="$(NuGetPackageRoot)cef.redist.osx64\120.1.8\build\cef.redist.osx64.props" Condition="Exists('$(NuGetPackageRoot)cef.redist.osx64\120.1.8\build\cef.redist.osx64.props')" />
+    <Import Project="$(NuGetPackageRoot)cef.redist.linux64\120.1.8\build\cef.redist.linux64.props" Condition="Exists('$(NuGetPackageRoot)cef.redist.linux64\120.1.8\build\cef.redist.linux64.props')" />
+    <Import Project="$(NuGetPackageRoot)cefglue.common\120.6099.211\buildTransitive\CefGlue.Common.props" Condition="Exists('$(NuGetPackageRoot)cefglue.common\120.6099.211\buildTransitive\CefGlue.Common.props')" />
   </ImportGroup>
   <PropertyGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
-    <PkgMicrosoft_CodeAnalysis_Analyzers Condition=" '$(PkgMicrosoft_CodeAnalysis_Analyzers)' == '' ">C:\Users\Austin_Zhang\.nuget\packages\microsoft.codeanalysis.analyzers\3.3.4</PkgMicrosoft_CodeAnalysis_Analyzers>
+    <PkgjQuery Condition=" '$(PkgjQuery)' == '' ">C:\Users\Austin_Zhang\.nuget\packages\jquery\1.9.0</PkgjQuery>
+    <PkgMicrosoft_CodeAnalysis_Analyzers Condition=" '$(PkgMicrosoft_CodeAnalysis_Analyzers)' == '' ">C:\Users\Austin_Zhang\.nuget\packages\microsoft.codeanalysis.analyzers\3.3.3</PkgMicrosoft_CodeAnalysis_Analyzers>
     <PkgAvalonia_BuildServices Condition=" '$(PkgAvalonia_BuildServices)' == '' ">C:\Users\Austin_Zhang\.nuget\packages\avalonia.buildservices\0.0.31</PkgAvalonia_BuildServices>
     <PkgAvalonia Condition=" '$(PkgAvalonia)' == '' ">C:\Users\Austin_Zhang\.nuget\packages\avalonia\11.2.7</PkgAvalonia>
   </PropertyGroup>

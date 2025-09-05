@@ -88,5 +88,6 @@ namespace ProjectIgnite.Models
         /// 最后分析时间
         /// </summary>
         public DateTime? LastAnalyzedAt { get; set; }
+        
     }
 }

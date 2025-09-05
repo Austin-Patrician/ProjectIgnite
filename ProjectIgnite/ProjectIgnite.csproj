@@ -1,8 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-ios</TargetFramework>
+<!--    <OutputType>Exe</OutputType>-->
+<!--    <TargetFramework>net8.0-ios</TargetFramework>-->
+
+    <OutputType>WinExe</OutputType>
     <Nullable>enable</Nullable>
+    <TargetFramework>net8.0</TargetFramework>
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
   </PropertyGroup>
@@ -15,7 +18,7 @@
   <ItemGroup>
     <PackageReference Include="Avalonia" Version="11.2.7" />
     <PackageReference Include="Avalonia.Desktop" Version="11.2.7" />
-    <PackageReference Include="Avalonia.iOS" Version="11.2.7" />
+<!--    <PackageReference Include="Avalonia.iOS" Version="11.2.7" />-->
     <PackageReference Include="Avalonia.ReactiveUI" Version="11.2.7" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="11.2.7" />
     <PackageReference Include="Avalonia.Fonts.Inter" Version="11.2.7" />
@@ -24,7 +27,10 @@
       <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
       <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
     </PackageReference>
+    <PackageReference Include="CefGlue.Avalonia" Version="120.6099.211" />
+    <PackageReference Include="ColorTextBlock.Avalonia" Version="11.0.3-a1" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.2.1" />
+    <PackageReference Include="Markdown.Avalonia" Version="11.0.3-a1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.0">
       <PrivateAssets>all</PrivateAssets>
@@ -39,8 +45,5 @@
     <PackageReference Include="Octokit" Version="13.0.1" />
     <PackageReference Include="System.Text.Json" Version="9.0.0" />
     <PackageReference Include="uikit" Version="2.25.0" />
-    <PackageReference Include="WebView.Avalonia" Version="11.0.0.1" />
-    <PackageReference Include="WebView.Avalonia.Desktop" Version="11.0.0.1" />
-    <PackageReference Include="WebView.Avalonia.iOS" Version="11.0.0.1" />
   </ItemGroup>
 </Project>

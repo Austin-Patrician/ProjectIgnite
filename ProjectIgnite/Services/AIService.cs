@@ -1,11 +1,14 @@
 using System;
+using System.ClientModel;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.Logging;
+using OpenAI;
 using OpenAI.Chat;
 using ProjectIgnite.Models;
 using ChatMessage = Microsoft.Extensions.AI.ChatMessage;
@@ -17,67 +20,65 @@ namespace ProjectIgnite.Services
     /// </summary>
     public class AIService : IAIService
     {
-        private readonly IChatClient _chatClient;
         private readonly ILogger<AIService> _logger;
 
         public AIService(
-            IChatClient chatClient,
             ILogger<AIService> logger)
         {
-            _chatClient = chatClient ?? throw new ArgumentNullException(nameof(chatClient));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
-        /// <summary>
-        /// 生成流式聊天完成
-        /// </summary>
-        public async IAsyncEnumerable<StreamingChatCompletionUpdate> GenerateStreamingAsync(
-            string systemPrompt,
-            string userMessage,
-            CancellationToken cancellationToken = default)
+        public async IAsyncEnumerable<string> GenerateTextWithOpenAiStreamAsync(List<ChatMessage> chatMessages,
+            [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var messages = new List<ChatMessage>
-            {
-                new(ChatRole.System, systemPrompt),
-                new(ChatRole.User, userMessage)
-            };
-
-            await foreach (var update in _chatClient.GetStreamingResponseAsync(messages, cancellationToken: cancellationToken))
-            {
-                // TODO: 需要将 Microsoft.Extensions.AI 的响应转换为 OpenAI.Chat.StreamingChatCompletionUpdate
-                // 这里需要适配器模式来转换类型
-                yield break; // 临时实现
-            }
-        }
-
-        /// <summary>
-        /// 生成聊天完成（非流式）
-        /// </summary>
-        public async Task<ChatCompletion> GenerateAsync(
-            string systemPrompt,
-            string userMessage,
-            CancellationToken cancellationToken = default)
-        {
-            try
-            {
-                var messages = new List<ChatMessage>
+            var chatClient = new OpenAI.Chat.ChatClient("openai/gpt-oss-20b",
+                new ApiKeyCredential("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"),
+                new OpenAIClientOptions()
                 {
-                    new(ChatRole.System, systemPrompt),
-                    new(ChatRole.User, userMessage)
-                };
+                    Endpoint = new Uri("https://openrouter.ai/api/v1")
+                }).AsIChatClient();
 
-                var response = await _chatClient.GetResponseAsync(messages, cancellationToken: cancellationToken);
-                
-                // TODO: 需要将 Microsoft.Extensions.AI 的响应转换为 OpenAI.Chat.ChatCompletion
-                // 这里需要适配器模式来转换类型
-                throw new NotImplementedException("需要实现类型转换");
-            }
-            catch (Exception ex)
+            IChatClient client =
+                new ChatClientBuilder(chatClient)
+                    .UseFunctionInvocation()
+                    .Build();
+
+
+            // System prompt to provide context.
+            var response = client.GetStreamingResponseAsync(chatMessages, cancellationToken: cancellationToken);
+
+            await foreach (var message in response)
             {
-                _logger.LogError(ex, "生成聊天完成时发生错误");
-                throw;
+                if (string.IsNullOrWhiteSpace(message.Text))
+                    continue;
+
+                yield return message.Text ?? "";
             }
         }
+
+
+        private async Task<string> GenerateTextWithOpenAiAsync(List<ChatMessage> chatMessages,
+            CancellationToken cancellationToken = default)
+        {
+            var chatClient = new ChatClient("openai/gpt-oss-20b",
+                new ApiKeyCredential("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"),
+                new OpenAIClientOptions()
+                {
+                    Endpoint = new Uri("https://openrouter.ai/api/v1")
+                }).AsIChatClient();
+
+            IChatClient client =
+                new ChatClientBuilder(chatClient)
+                    .UseFunctionInvocation()
+                    .Build();
+
+            // System prompt to provide context.
+            var response = await client.GetResponseAsync(chatMessages, cancellationToken: cancellationToken);
+
+
+            return response.Text ?? "";
+        }
+
 
         /// <summary>
         /// 内部方法：生成基本聊天完成
@@ -95,8 +96,8 @@ namespace ProjectIgnite.Services
                     new(ChatRole.User, userMessage)
                 };
 
-                var response = await _chatClient.GetResponseAsync(messages, cancellationToken: cancellationToken);
-                return response.Text ?? string.Empty;
+                var response = await GenerateTextWithOpenAiAsync(messages, cancellationToken: cancellationToken);
+                return response;
             }
             catch (Exception ex)
             {
@@ -120,16 +121,17 @@ namespace ProjectIgnite.Services
 
                 var systemPrompt = "你是一个专业的软件架构分析师。请分析给定的项目结构并生成详细的架构说明。";
                 var userMessage = $"项目文件结构：\n{fileTree}\n\nREADME内容：\n{readmeContent}";
-                
+
                 if (!string.IsNullOrEmpty(customInstructions))
                 {
                     userMessage += $"\n\n自定义指令：\n{customInstructions}";
                 }
 
-                var explanation = await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
+                var explanation =
+                    await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
 
                 _logger.LogInformation("架构解释生成完成, 长度: {Length}", explanation.Length);
-                
+
                 return explanation;
             }
             catch (Exception ex)
@@ -153,11 +155,12 @@ namespace ProjectIgnite.Services
 
                 var systemPrompt = "你是一个专业的软件架构分析师。请根据架构说明和文件结构生成组件映射，返回JSON格式。";
                 var userMessage = $"架构说明：\n{architectureExplanation}\n\n文件结构：\n{fileTree}";
-                
-                var mappingText = await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
+
+                var mappingText =
+                    await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
 
                 _logger.LogInformation("组件映射生成完成, 长度: {Length}", mappingText.Length);
-                
+
                 return mappingText;
             }
             catch (Exception ex)
@@ -179,14 +182,25 @@ namespace ProjectIgnite.Services
             {
                 _logger.LogInformation("生成 Mermaid 图表");
 
-                var systemPrompt = "你是一个专业的图表生成专家。请根据架构说明和组件映射生成 Mermaid 图表代码。";
-                var userMessage = $"架构说明：\n{architectureExplanation}\n\n组件映射：\n{componentMapping}";
-                
-                var mermaidCode = await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
+                var systemPrompt = @"你是一个专业的软件架构分析专家。请根据提供的架构说明和组件映射，生成一个完整的 Markdown 格式的项目架构文档。
 
-                _logger.LogInformation("Mermaid 图表生成完成, 长度: {Length}", mermaidCode.Length);
+要求：
+1. 返回完整的 Markdown 格式内容
+2. 包含项目架构概述、核心组件说明、技术栈分析等章节
+3. 必须包含一个 Mermaid 图表来可视化项目结构
+4. Mermaid 图表应使用 ```mermaid 代码块格式
+5. 图表类型建议使用 flowchart TD 或 graph TD，展示模块间的依赖关系
+6. 内容要专业、详细，适合技术文档
+7. 使用中文撰写";
                 
-                return mermaidCode;
+                var userMessage = $"请基于以下信息生成项目架构文档：\n\n架构说明：\n{architectureExplanation}\n\n组件映射：\n{componentMapping}";
+
+                var markdownContent =
+                    await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
+
+                _logger.LogInformation("Mermaid 图表生成完成, 长度: {Length}", markdownContent.Length);
+
+                return markdownContent;
             }
             catch (Exception ex)
             {
@@ -209,11 +223,12 @@ namespace ProjectIgnite.Services
 
                 var systemPrompt = "你是一个专业的图表修改专家。请根据修改指令更新 Mermaid 图表代码。";
                 var userMessage = $"当前图表：\n{currentDiagram}\n\n修改指令：\n{instructions}";
-                
-                var modifiedCode = await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
+
+                var modifiedCode =
+                    await GenerateChatCompletionInternalAsync(systemPrompt, userMessage, cancellationToken);
 
                 _logger.LogInformation("图表修改完成，代码长度: {Length}", modifiedCode.Length);
-                
+
                 return modifiedCode;
             }
             catch (Exception ex)
@@ -235,7 +250,7 @@ namespace ProjectIgnite.Services
             string? customInstructions)
         {
             var prompt = new StringBuilder();
-            
+
             prompt.AppendLine("请分析以下GitHub仓库的架构和设计模式：");
             prompt.AppendLine();
             prompt.AppendLine($"**仓库信息：**");
@@ -284,7 +299,7 @@ namespace ProjectIgnite.Services
             string architectureExplanation)
         {
             var prompt = new StringBuilder();
-            
+
             prompt.AppendLine("基于以下架构分析，请创建组件到文件/目录的映射关系：");
             prompt.AppendLine();
             prompt.AppendLine("**架构分析：**");
@@ -317,7 +332,7 @@ namespace ProjectIgnite.Services
             string? customInstructions)
         {
             var prompt = new StringBuilder();
-            
+
             prompt.AppendLine("请基于以下信息生成Mermaid架构图：");
             prompt.AppendLine();
             prompt.AppendLine("**项目信息：**");
@@ -327,7 +342,7 @@ namespace ProjectIgnite.Services
             prompt.AppendLine("**架构分析：**");
             prompt.AppendLine(architectureExplanation);
             prompt.AppendLine();
-            
+
             if (componentMapping.Any())
             {
                 prompt.AppendLine("**组件映射：**");
@@ -335,6 +350,7 @@ namespace ProjectIgnite.Services
                 {
                     prompt.AppendLine($"- {mapping.Key} -> {mapping.Value}");
                 }
+
                 prompt.AppendLine();
             }
 
@@ -371,7 +387,7 @@ namespace ProjectIgnite.Services
             string modificationInstructions)
         {
             var prompt = new StringBuilder();
-            
+
             prompt.AppendLine("请根据以下修改指令更新Mermaid图表：");
             prompt.AppendLine();
             prompt.AppendLine("**当前图表代码：**");
@@ -400,12 +416,12 @@ namespace ProjectIgnite.Services
         private static Dictionary<string, string> ParseComponentMapping(string mappingText)
         {
             var mapping = new Dictionary<string, string>();
-            
+
             if (string.IsNullOrWhiteSpace(mappingText))
                 return mapping;
 
             var lines = mappingText.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            
+
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
@@ -417,7 +433,7 @@ namespace ProjectIgnite.Services
                 {
                     var component = trimmedLine[..arrowIndex].Trim();
                     var path = trimmedLine[(arrowIndex + 4)..].Trim();
-                    
+
                     if (!string.IsNullOrEmpty(component) && !string.IsNullOrEmpty(path))
                     {
                         mapping[component] = path;
@@ -443,14 +459,14 @@ namespace ProjectIgnite.Services
             foreach (var line in lines)
             {
                 var trimmedLine = line.Trim();
-                
+
                 // 检测代码块标记
                 if (trimmedLine.StartsWith("```mermaid", StringComparison.OrdinalIgnoreCase))
                 {
                     inCodeBlock = true;
                     continue;
                 }
-                
+
                 if (trimmedLine.StartsWith("```") && inCodeBlock)
                 {
                     inCodeBlock = false;
@@ -476,21 +492,21 @@ namespace ProjectIgnite.Services
                 return true; // 保留空行
 
             var trimmed = line.Trim();
-            
+
             // Mermaid图表类型
-            var mermaidKeywords = new[] 
+            var mermaidKeywords = new[]
             {
                 "graph", "flowchart", "sequenceDiagram", "classDiagram", "stateDiagram",
                 "erDiagram", "journey", "gantt", "pie", "gitgraph", "C4Context",
-                "TD", "TB", "BT", "RL", "LR", "-->", "---", "==>", "-.->"  
+                "TD", "TB", "BT", "RL", "LR", "-->", "---", "==>", "-.->"
             };
 
-            return mermaidKeywords.Any(keyword => 
-                trimmed.StartsWith(keyword, StringComparison.OrdinalIgnoreCase) ||
-                trimmed.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
-                trimmed.Contains("[") || trimmed.Contains("]") ||
-                trimmed.Contains("(") || trimmed.Contains(")") ||
-                trimmed.Contains("{") || trimmed.Contains("}");
+            return mermaidKeywords.Any(keyword =>
+                       trimmed.StartsWith(keyword, StringComparison.OrdinalIgnoreCase) ||
+                       trimmed.Contains(keyword, StringComparison.OrdinalIgnoreCase)) ||
+                   trimmed.Contains("[") || trimmed.Contains("]") ||
+                   trimmed.Contains("(") || trimmed.Contains(")") ||
+                   trimmed.Contains("{") || trimmed.Contains("}");
         }
 
         #endregion

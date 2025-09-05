@@ -1,0 +1,487 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ProjectIgnite.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ProjectIgnite.Views.ProjectLauncherView"
+             x:DataType="vm:ProjectLauncherViewModel">
+
+    <Design.DataContext>
+        <vm:ProjectLauncherViewModel/>
+    </Design.DataContext>
+
+    <UserControl.Styles>
+        <!-- 项目卡片样式 -->
+        <Style Selector="Border.ProjectCard">
+            <Setter Property="Background" Value="White"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BoxShadow" Value="0 2 8 0 #20000000"/>
+            <Setter Property="Padding" Value="16"/>
+            <Setter Property="Margin" Value="8"/>
+        </Style>
+
+        <!-- 状态指示器样式 -->
+        <Style Selector="Ellipse.StatusIndicator">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="Margin" Value="0,0,8,0"/>
+        </Style>
+
+        <Style Selector="Ellipse.StatusIndicator.Ready">
+            <Setter Property="Fill" Value="#6c757d"/>
+        </Style>
+
+        <Style Selector="Ellipse.StatusIndicator.Running">
+            <Setter Property="Fill" Value="#28a745"/>
+        </Style>
+
+        <Style Selector="Ellipse.StatusIndicator.Error">
+            <Setter Property="Fill" Value="#dc3545"/>
+        </Style>
+
+        <!-- 按钮样式 -->
+        <Style Selector="Button.ActionButton">
+            <Setter Property="Padding" Value="12,6"/>
+            <Setter Property="Margin" Value="4,2"/>
+            <Setter Property="CornerRadius" Value="4"/>
+        </Style>
+
+        <Style Selector="Button.StartButton">
+            <Setter Property="Background" Value="#28a745"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.StopButton">
+            <Setter Property="Background" Value="#dc3545"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.ConfigButton">
+            <Setter Property="Background" Value="#007bff"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <!-- 标签页样式 -->
+        <Style Selector="TabItem">
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <!-- 工具栏 -->
+            <RowDefinition Height="Auto"/>
+            <!-- 主内容区域 -->
+            <RowDefinition Height="*"/>
+            <!-- 状态栏 -->
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 工具栏 -->
+        <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,0,0,1" Padding="16,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左侧控件 -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+                    <TextBlock Text="🚀" FontSize="20" VerticalAlignment="Center"/>
+                    <TextBlock Text="Project Launcher" FontSize="16" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    
+                    <!-- 筛选控件 -->
+                    <ComboBox ItemsSource="{Binding ProjectTypes}"
+                              SelectedItem="{Binding SelectedProjectType}"
+                              MinWidth="120"/>
+                    
+                    <TextBox Watermark="搜索项目..." 
+                             Text="{Binding FilterText}"
+                             MinWidth="200"/>
+                </StackPanel>
+
+                <!-- 右侧按钮 -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="8">
+                    <Button Classes="ActionButton" Command="{Binding RefreshCommand}"
+                            ToolTip.Tip="刷新数据">
+                        <TextBlock Text="🔄"/>
+                    </Button>
+                    <Button Classes="ActionButton" Command="{Binding CleanupPortsCommand}"
+                            ToolTip.Tip="清理端口">
+                        <TextBlock Text="🧹"/>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 主内容区域 -->
+        <TabControl Grid.Row="1" Margin="16">
+            <!-- 项目启动器标签页 -->
+            <TabItem Header="项目启动器">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <!-- 项目列表 -->
+                        <ColumnDefinition Width="2*"/>
+                        <!-- 分隔线 -->
+                        <ColumnDefinition Width="Auto"/>
+                        <!-- 控制面板 -->
+                        <ColumnDefinition Width="1*"/>
+                    </Grid.ColumnDefinitions>
+
+                    <!-- 项目列表 -->
+                    <Border Grid.Column="0" Classes="ProjectCard" Margin="0,0,8,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- 标题 -->
+                            <TextBlock Grid.Row="0" Text="可用项目" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+
+                            <!-- 项目列表 -->
+                            <ScrollViewer Grid.Row="1">
+                                <Grid>
+                                    <!-- 项目加载指示器 -->
+                                    <StackPanel IsVisible="{Binding IsProjectsLoading}" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               Margin="20">
+                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"/>
+                                        <TextBlock Text="正在加载项目..." HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- 空状态提示 -->
+                                    <StackPanel IsVisible="{Binding ProjectSources.Count, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=0}"
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               Margin="20">
+                                        <TextBlock Text="📁" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                                        <TextBlock Text="暂无可用项目" HorizontalAlignment="Center" Margin="0,8,0,0" Opacity="0.7"/>
+                                        <TextBlock Text="请先在项目源页面添加项目" HorizontalAlignment="Center" FontSize="12" Opacity="0.5"/>
+                                    </StackPanel>
+
+                                    <!-- 项目列表 -->
+                                    <ItemsControl ItemsSource="{Binding ProjectSources}" IsVisible="{Binding ProjectSources.Count, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:ProjectLauncherProjectSourceViewModel">
+                                                <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                        CornerRadius="6" Padding="12" Margin="0,0,0,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <!-- 项目信息 -->
+                                                        <StackPanel Grid.Column="0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Ellipse Classes="StatusIndicator Ready"/>
+                                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold"/>
+                                                                <Border Background="#e9ecef" CornerRadius="3" Padding="4,2">
+                                                                    <TextBlock Text="{Binding ProjectType}" FontSize="10"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <TextBlock Text="{Binding LocalPath}" Foreground="Gray" FontSize="12" Margin="20,4,0,0"/>
+                                                            <TextBlock Text="{Binding PrimaryLanguage}" Foreground="Gray" FontSize="10" Margin="20,2,0,0"/>
+                                                        </StackPanel>
+
+                                                        <!-- 操作按钮 -->
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                            <Button Classes="ActionButton ConfigButton" 
+                                                                    Command="{Binding $parent[UserControl].((vm:ProjectLauncherViewModel)DataContext).ConfigureProjectCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="配置">
+                                                                <TextBlock Text="⚙️" FontSize="12"/>
+                                                            </Button>
+                                                            <Button Classes="ActionButton" 
+                                                                    Content="选择"
+                                                                    Command="{Binding $parent[UserControl].((vm:ProjectLauncherViewModel)DataContext).LoadProjectsCommand}"
+                                                                    CommandParameter="{Binding}"/>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <!-- 分隔线 -->
+                    <GridSplitter Grid.Column="1" Width="4" Background="Transparent" ResizeDirection="Columns"/>
+
+                    <!-- 控制面板 -->
+                    <Border Grid.Column="2" Classes="ProjectCard" Margin="8,0,0,0">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <!-- 启动配置 -->
+                            <StackPanel Grid.Row="0" Margin="0,0,0,16">
+                                <TextBlock Text="启动配置" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                                
+                                <TextBlock Text="环境:" FontWeight="SemiBold" Margin="0,0,0,4"/>
+                                <ComboBox ItemsSource="{Binding Environments}"
+                                          SelectedItem="{Binding SelectedEnvironment}"
+                                          HorizontalAlignment="Stretch"/>
+                                
+                                <TextBlock Text="自定义端口:" FontWeight="SemiBold" Margin="0,12,0,4"/>
+                                <NumericUpDown Value="{Binding CustomPort}" 
+                                               Minimum="1000" Maximum="65535"
+                                               Watermark="自动分配"
+                                               HorizontalAlignment="Stretch"/>
+
+                                <Button Classes="ActionButton StartButton" 
+                                        Content="🚀 启动项目"
+                                        Command="{Binding StartProjectCommand}"
+                                        HorizontalAlignment="Stretch"
+                                        Margin="0,16,0,0"/>
+                            </StackPanel>
+
+                            <!-- 快捷操作 -->
+                            <StackPanel Grid.Row="1" Margin="0,0,0,16">
+                                <TextBlock Text="快捷操作" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                                
+                                <Button Classes="ActionButton" Content="🔄 刷新项目" 
+                                        Command="{Binding RefreshCommand}"
+                                        HorizontalAlignment="Stretch" Margin="0,0,0,4"/>
+                                <Button Classes="ActionButton" Content="🧹 清理端口" 
+                                        Command="{Binding CleanupPortsCommand}"
+                                        HorizontalAlignment="Stretch" Margin="0,0,0,4"/>
+                            </StackPanel>
+
+                            <!-- 项目信息 -->
+                            <StackPanel Grid.Row="2" Margin="0,0,0,16" IsVisible="{Binding SelectedProject, Converter={x:Static ObjectConverters.IsNotNull}}">
+                                <TextBlock Text="选中项目" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                                
+                                <TextBlock Text="{Binding SelectedProject.Name}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{Binding SelectedProject.ProjectType}" Foreground="Gray" FontSize="12"/>
+                                <TextBlock Text="{Binding SelectedProject.LocalPath}" Foreground="Gray" FontSize="10" TextWrapping="Wrap"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- 运行监控标签页 -->
+            <TabItem Header="运行监控">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="1*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="1*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 运行中的项目 -->
+                    <Border Grid.Row="0" Classes="ProjectCard">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Text="运行中的项目" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+
+                            <ScrollViewer Grid.Row="1">
+                                <Grid>
+                                    <!-- 运行项目加载指示器 -->
+                                    <StackPanel IsVisible="{Binding IsRunningProjectsLoading}" 
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               Margin="20">
+                                        <ProgressBar IsIndeterminate="True" Width="200" Height="4"/>
+                                        <TextBlock Text="正在加载运行状态..." HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                                    </StackPanel>
+
+                                    <!-- 空状态提示 -->
+                                    <StackPanel IsVisible="{Binding RunningProjects.Count, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=0}"
+                                               HorizontalAlignment="Center" 
+                                               VerticalAlignment="Center"
+                                               Margin="20">
+                                        <TextBlock Text="🚀" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                                        <TextBlock Text="暂无运行中的项目" HorizontalAlignment="Center" Margin="0,8,0,0" Opacity="0.7"/>
+                                        <TextBlock Text="点击启动按钮来启动项目" HorizontalAlignment="Center" FontSize="12" Opacity="0.5"/>
+                                    </StackPanel>
+
+                                    <!-- 运行项目列表 -->
+                                    <ItemsControl ItemsSource="{Binding RunningProjects}" IsVisible="{Binding RunningProjects.Count, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="vm:LaunchedProjectViewModel">
+                                                <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+                                                        CornerRadius="6" Padding="12" Margin="0,0,0,8">
+                                                    <Grid>
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition Width="*"/>
+                                                            <ColumnDefinition Width="Auto"/>
+                                                        </Grid.ColumnDefinitions>
+
+                                                        <StackPanel Grid.Column="0">
+                                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                                <Ellipse Classes="StatusIndicator Running"/>
+                                                                <TextBlock Text="{Binding ProjectName}" FontWeight="SemiBold"/>
+                                                                <Border Background="#28a745" CornerRadius="3" Padding="4,2">
+                                                                    <TextBlock Text="{Binding Status}" Foreground="White" FontSize="10"/>
+                                                                </Border>
+                                                            </StackPanel>
+                                                            <StackPanel Orientation="Horizontal" Spacing="16" Margin="20,4,0,0">
+                                                                <TextBlock Text="{Binding CurrentEnvironment}" Foreground="Gray" FontSize="12"/>
+                                                                <TextBlock Text="{Binding CurrentPort, StringFormat='Port: {0}'}" Foreground="Gray" FontSize="12"/>
+                                                                <TextBlock Text="{Binding ProcessId, StringFormat='PID: {0}'}" Foreground="Gray" FontSize="12"/>
+                                                            </StackPanel>
+                                                        </StackPanel>
+
+                                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="4">
+                                                            <Button Classes="ActionButton" 
+                                                                    Command="{Binding $parent[UserControl].((vm:ProjectLauncherViewModel)DataContext).ViewLogsCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="查看日志">
+                                                                <TextBlock Text="📋" FontSize="12"/>
+                                                            </Button>
+                                                            <Button Classes="ActionButton" 
+                                                                    Command="{Binding $parent[UserControl].((vm:ProjectLauncherViewModel)DataContext).RestartProjectCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="重启">
+                                                                <TextBlock Text="🔄" FontSize="12"/>
+                                                            </Button>
+                                                            <Button Classes="ActionButton StopButton" 
+                                                                    Command="{Binding $parent[UserControl].((vm:ProjectLauncherViewModel)DataContext).StopProjectCommand}"
+                                                                    CommandParameter="{Binding}"
+                                                                    ToolTip.Tip="停止">
+                                                                <TextBlock Text="⏹️" FontSize="12"/>
+                                                            </Button>
+                                                        </StackPanel>
+                                                    </Grid>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+
+                    <!-- 分隔线 -->
+                    <GridSplitter Grid.Row="1" Height="4" Background="Transparent" ResizeDirection="Rows"/>
+
+                    <!-- 项目日志 -->
+                    <Border Grid.Row="2" Classes="ProjectCard">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+
+                            <Grid Grid.Row="0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <TextBlock Grid.Column="0" Text="项目日志" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+                                <Button Grid.Column="1" Classes="ActionButton" Command="{Binding ClearLogsCommand}" Content="清空"/>
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="1" Background="Black">
+                                <ItemsControl ItemsSource="{Binding ProjectLogs}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding}" 
+                                                       Foreground="LightGreen" 
+                                                       FontFamily="Consolas" 
+                                                       FontSize="11" 
+                                                       Margin="4,1"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Grid>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- 端口管理标签页 -->
+            <TabItem Header="端口管理">
+                <Border Classes="ProjectCard">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="端口分配状态" FontWeight="SemiBold" FontSize="16" Margin="0,0,0,12"/>
+
+                        <!-- 端口加载指示器 -->
+                        <StackPanel Grid.Row="1" IsVisible="{Binding IsPortsLoading}" 
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"
+                                   Margin="20">
+                            <ProgressBar IsIndeterminate="True" Width="200" Height="4"/>
+                            <TextBlock Text="正在加载端口信息..." HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                        </StackPanel>
+
+                        <!-- 空状态提示 -->
+                        <StackPanel Grid.Row="1" IsVisible="{Binding PortAllocations.Count, Converter={x:Static ObjectConverters.Equal}, ConverterParameter=0}"
+                                   HorizontalAlignment="Center" 
+                                   VerticalAlignment="Center"
+                                   Margin="20">
+                            <TextBlock Text="🔌" FontSize="48" HorizontalAlignment="Center" Opacity="0.5"/>
+                            <TextBlock Text="暂无端口分配" HorizontalAlignment="Center" Margin="0,8,0,0" Opacity="0.7"/>
+                            <TextBlock Text="启动项目后将显示端口分配信息" HorizontalAlignment="Center" FontSize="12" Opacity="0.5"/>
+                        </StackPanel>
+
+                        <!-- 端口列表 -->
+                        <DataGrid Grid.Row="1" ItemsSource="{Binding PortAllocations}" 
+                                  AutoGenerateColumns="False" IsReadOnly="True"
+                                  IsVisible="{Binding PortAllocations.Count, Converter={x:Static ObjectConverters.NotEqual}, ConverterParameter=0}">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="端口" Binding="{Binding Port}" Width="80"/>
+                                <DataGridTextColumn Header="状态" Binding="{Binding Status}" Width="80"/>
+                                <DataGridTextColumn Header="项目" Binding="{Binding ProjectName}" Width="200"/>
+                                <DataGridTextColumn Header="描述" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="最后使用" Binding="{Binding LastUsedAt, StringFormat={}{0:yyyy-MM-dd HH:mm}}" Width="150"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </Grid>
+                </Border>
+            </TabItem>
+        </TabControl>
+
+        <!-- 状态栏 -->
+        <Border Grid.Row="2" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}"
+                BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}"
+                BorderThickness="0,1,0,0" Padding="16,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Text="{Binding StatusMessage}" VerticalAlignment="Center"/>
+                
+                <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="16">
+                    <TextBlock Text="{Binding ProjectSources.Count, StringFormat='项目: {0}'}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding RunningProjects.Count, StringFormat='运行中: {0}'}" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding PortAllocations.Count, StringFormat='端口占用: {0}'}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- 操作加载指示器 (仅用于具体操作，如启动、停止项目) -->
+        <Border Grid.RowSpan="3" Background="#80000000" IsVisible="{Binding IsLoading}">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressBar IsIndeterminate="True" Width="200" Height="4"/>
+                <TextBlock Text="正在处理..." Foreground="White" HorizontalAlignment="Center" Margin="0,8,0,0"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

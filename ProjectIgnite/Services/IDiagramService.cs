@@ -8,20 +8,38 @@ namespace ProjectIgnite.Services
 {
     /// <summary>
     /// 图表生成服务接口
-    /// 负责处理 GitHub 仓库到架构图表的转换
+    /// 负责处理本地项目到架构图表的转换
     /// </summary>
     public interface IDiagramService
     {
         /// <summary>
-        /// 生成架构图表
+        /// 分析本地项目并生成架构图表
         /// </summary>
-        /// <param name="repositoryUrl">GitHub 仓库 URL</param>
+        /// <param name="projectPath">本地项目路径</param>
+        /// <param name="projectName">项目名称</param>
         /// <param name="customInstructions">自定义指令（可选）</param>
         /// <param name="progress">进度报告</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>图表生成结果</returns>
-        Task<DiagramResult> GenerateDiagramAsync(
-            string repositoryUrl,
+        Task<DiagramResult> AnalyzeLocalProjectAsync(
+            string projectPath,
+            string projectName,
+            string? customInstructions = null,
+            IProgress<GenerationProgress>? progress = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 重新分析现有项目
+        /// </summary>
+        /// <param name="projectPath">项目路径</param>
+        /// <param name="projectName">项目名称</param>
+        /// <param name="customInstructions">自定义指令</param>
+        /// <param name="progress">进度报告</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>图表生成结果</returns>
+        Task<DiagramResult> RegenerateAnalysisAsync(
+            string projectPath,
+            string projectName,
             string? customInstructions = null,
             IProgress<GenerationProgress>? progress = null,
             CancellationToken cancellationToken = default);
@@ -43,12 +61,29 @@ namespace ProjectIgnite.Services
         /// </summary>
         /// <param name="diagramContent">图表内容</param>
         /// <param name="format">导出格式</param>
+        /// <param name="outputPath">输出路径</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>导出的文件数据</returns>
         Task<byte[]> ExportDiagramAsync(
             string diagramContent,
             ExportFormat format,
+            string outputPath,
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// 获取已保存的项目分析结果
+        /// </summary>
+        /// <param name="projectPath">项目路径</param>
+        /// <returns>分析结果，如果不存在则返回null</returns>
+        Task<DiagramResult?> GetSavedAnalysisAsync(string projectPath);
+
+        /// <summary>
+        /// 保存分析结果到本地
+        /// </summary>
+        /// <param name="projectPath">项目路径</param>
+        /// <param name="result">分析结果</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        Task SaveAnalysisAsync(string projectPath, DiagramResult result, CancellationToken cancellationToken = default);
     }
 
     /// <summary>
