@@ -11,8 +11,8 @@
   
     <Application.Styles>
         <FluentTheme />
+        <StyleInclude Source="avares://Avalonia.Controls.DataGrid/Themes/Fluent.xaml" />
 
-        
         <!-- 全局主题样式 -->
         <Style>
             <!-- 主窗口样式 -->

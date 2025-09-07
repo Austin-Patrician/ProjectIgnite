@@ -1,0 +1,739 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="using:ProjectIgnite.ViewModels"
+             xmlns:converters="using:ProjectIgnite.Converters"
+             mc:Ignorable="d" d:DesignWidth="1200" d:DesignHeight="800"
+             x:Class="ProjectIgnite.Views.ProjectAnalyzerView"
+             x:DataType="vm:ProjectAnalyzerViewModel">
+
+  <UserControl.Resources>
+    <converters:BooleanNegationConverter x:Key="BooleanNegationConverter" />
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <!-- 顶部工具栏 -->
+    <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+            BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+            BorderThickness="0,0,0,1" Padding="16,12">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <!-- 左侧控制区 -->
+        <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="12">
+          <Button Content="选择文件夹" 
+                  Command="{Binding SelectFolderCommand}"
+                  Classes="accent" />
+          
+          <Button Content="{Binding ScanButtonText}" 
+                  Command="{Binding StartScanCommand}"
+                  IsEnabled="{Binding CanStartScan}"
+                  Classes="accent" />
+          
+          <Button Content="取消" 
+                  Command="{Binding CancelScanCommand}"
+                  IsVisible="{Binding IsScanning}" />
+          
+          <Separator />
+          
+          <Button Content="{Binding AIButtonText}" 
+                  Command="{Binding GenerateAIInsightsCommand}"
+                  IsEnabled="{Binding CanGenerateAI}"
+                  Classes="accent" />
+          
+          <Button Content="预览 AI 内容" 
+                  Command="{Binding PreviewAIContentCommand}"
+                  IsEnabled="{Binding HasResults}" />
+          
+          <Separator />
+          
+          <Button Content="导出 SVG" 
+                  Command="{Binding ExportSvgCommand}"
+                  IsEnabled="{Binding HasResults}" />
+          
+          <Button Content="导出 JSON" 
+                  Command="{Binding ExportJsonCommand}"
+                  IsEnabled="{Binding HasResults}" />
+        </StackPanel>
+
+        <!-- 右侧状态区 -->
+        <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12">
+          <CheckBox Content="启用 AI 分析" 
+                    IsChecked="{Binding EnableAI}" />
+          
+          <TextBlock Text="Token 预算:" VerticalAlignment="Center" />
+          <NumericUpDown Value="{Binding TokenBudget}" 
+                         Minimum="1000" Maximum="50000" Increment="1000"
+                         Width="100" />
+        </StackPanel>
+      </Grid>
+    </Border>
+
+    <!-- 主内容区 -->
+    <Grid Grid.Row="1">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="300" />
+        <ColumnDefinition Width="4" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <!-- 左侧文件树和过滤器 -->
+      <Border Grid.Column="0" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}"
+              BorderBrush="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" 
+              BorderThickness="0,0,1,0">
+        <Grid>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
+
+          <!-- 项目路径显示 -->
+          <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                  Padding="12,8">
+            <StackPanel>
+              <TextBlock Text="项目路径" FontWeight="SemiBold" FontSize="12" 
+                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+              <TextBlock Text="{Binding SelectedPath}" 
+                         TextWrapping="Wrap" 
+                         ToolTip.Tip="{Binding SelectedPath}" />
+            </StackPanel>
+          </Border>
+
+          <!-- 过滤器 -->
+          <Border Grid.Row="1" Padding="12,8">
+            <StackPanel>
+              <TextBlock Text="文件过滤" FontWeight="SemiBold" FontSize="12" 
+                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" 
+                         Margin="0,0,0,4" />
+              <CheckBox Content="仅显示关键文件" IsChecked="True" />
+              <CheckBox Content="隐藏第三方目录" IsChecked="True" />
+              <CheckBox Content="仅显示配置文件" />
+            </StackPanel>
+          </Border>
+
+          <!-- 文件树 -->
+          <TreeView Grid.Row="2" 
+                    ItemsSource="{Binding FileTree}"
+                    Margin="8">
+            <TreeView.ItemTemplate>
+              <TreeDataTemplate ItemsSource="{Binding Children}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                  <TextBlock Text="📁" IsVisible="{Binding Type, Converter={x:Static converters:ProjectSourceConverters.IsDirectory}}" />
+                  <TextBlock Text="📄" IsVisible="{Binding Type, Converter={x:Static converters:ProjectSourceConverters.IsFile}}" />
+                  <TextBlock Text="{Binding Path, Converter={x:Static converters:ProjectSourceConverters.GetFileName}}" />
+                  <TextBlock Text="[关键]" 
+                             IsVisible="{Binding IsKey}"
+                             Foreground="Orange" 
+                             FontSize="10" />
+                </StackPanel>
+              </TreeDataTemplate>
+            </TreeView.ItemTemplate>
+          </TreeView>
+
+          <!-- 进度和状态 -->
+          <Border Grid.Row="3" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                  Padding="12,8">
+            <StackPanel>
+              <TextBlock Text="{Binding StatusMessage}" 
+                         TextWrapping="Wrap" 
+                         FontSize="12" />
+              <ProgressBar Value="{Binding ScanProgress}" 
+                           IsVisible="{Binding IsScanning}"
+                           Margin="0,4,0,0" />
+            </StackPanel>
+          </Border>
+        </Grid>
+      </Border>
+
+      <!-- 分隔符 -->
+      <GridSplitter Grid.Column="1" 
+                    Background="{DynamicResource SystemControlForegroundBaseMediumLowBrush}" />
+
+      <!-- 右侧内容标签页 -->
+      <TabControl Grid.Column="2" 
+                  SelectedIndex="{Binding SelectedTabIndex}"
+                  Margin="8">
+
+        <!-- 概览标签页 -->
+        <TabItem Header="概览">
+          <ScrollViewer>
+            <StackPanel Spacing="16" Margin="16">
+              
+              <!-- 项目基本信息 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16">
+                <StackPanel>
+                  <TextBlock Text="项目信息" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="检测语言:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ScanResult.LanguagesDetected, Converter={x:Static converters:ProjectSourceConverters.JoinStrings}}" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="文件总数:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ScanResult.TotalFilesScanned}" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="目录总数:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ScanResult.TotalDirectoriesScanned}" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="扫描耗时:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ScanResult.ScanDurationMs, StringFormat='{}{0} ms'}" Margin="0,0,0,4" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- 环境信息 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding ScanResult.Environments, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel>
+                  <TextBlock Text="环境配置" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text=".NET SDK:" FontWeight="SemiBold" Margin="0,0,12,4" 
+                               IsVisible="{Binding ScanResult.Environments.DotNetSdk, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding ScanResult.Environments.DotNetSdk}" Margin="0,0,0,4" 
+                               IsVisible="{Binding ScanResult.Environments.DotNetSdk, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="目标框架:" FontWeight="SemiBold" Margin="0,0,12,4" 
+                               IsVisible="{Binding ScanResult.Environments.TargetFrameworks.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ScanResult.Environments.TargetFrameworks, Converter={x:Static converters:ProjectSourceConverters.JoinStrings}}" Margin="0,0,0,4" 
+                               IsVisible="{Binding ScanResult.Environments.TargetFrameworks.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}" />
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="Node.js:" FontWeight="SemiBold" Margin="0,0,12,4" 
+                               IsVisible="{Binding ScanResult.Environments.NodeVersion, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ScanResult.Environments.NodeVersion}" Margin="0,0,0,4" 
+                               IsVisible="{Binding ScanResult.Environments.NodeVersion, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="包管理器:" FontWeight="SemiBold" Margin="0,0,12,4" 
+                               IsVisible="{Binding ScanResult.Environments.PackageManager, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding ScanResult.Environments.PackageManager}" Margin="0,0,0,4" 
+                               IsVisible="{Binding ScanResult.Environments.PackageManager, Converter={x:Static ObjectConverters.IsNotNull}}" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- AI 服务状态 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding AiServiceStatus, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel>
+                  <TextBlock Text="AI 服务状态" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Ellipse Width="12" Height="12" 
+                             Fill="{Binding AiServiceStatus.IsAvailable, Converter={x:Static converters:ProjectSourceConverters.BoolToStatusColor}}" />
+                    <TextBlock Text="{Binding AiServiceStatus.StatusMessage}" />
+                  </StackPanel>
+                  
+                  <TextBlock Text="{Binding AiServiceStatus.CurrentModel, StringFormat='模型: {0}'}" 
+                             Margin="0,4,0,0"
+                             IsVisible="{Binding AiServiceStatus.CurrentModel, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- 结构图标签页 -->
+        <TabItem Header="结构图">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- 结构图工具栏 -->
+            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                    Padding="12,8">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Content="缩放适应" />
+                <Button Content="居中" />
+                <Button Content="放大" />
+                <Button Content="缩小" />
+                <Separator />
+                <Button Content="导出 SVG" Command="{Binding ExportSvgCommand}" />
+              </StackPanel>
+            </Border>
+            
+            <!-- 结构图画布 -->
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+              <Canvas Background="White" Width="1000" Height="800">
+                <!-- 这里应该渲染结构图节点和边 -->
+                <TextBlock Text="结构图渲染功能待实现" 
+                           Canvas.Left="400" Canvas.Top="380" 
+                           FontSize="16" 
+                           Foreground="Gray" />
+                
+                <!-- 节点渲染 -->
+                <ItemsControl ItemsSource="{Binding StructureNodes}" Width="1000" Height="800">
+                  <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                      <Canvas />
+                    </ItemsPanelTemplate>
+                  </ItemsControl.ItemsPanel>
+                  
+                  <ItemsControl.Styles>
+                    <Style Selector="ContentPresenter">
+                      <Setter Property="Canvas.Left" Value="{Binding Position.X}" />
+                      <Setter Property="Canvas.Top" Value="{Binding Position.Y}" />
+                    </Style>
+                  </ItemsControl.Styles>
+                  
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                      <Border Background="LightBlue" 
+                              BorderBrush="DarkBlue" 
+                              BorderThickness="2" 
+                              CornerRadius="4" 
+                              Padding="8,4">
+                        <StackPanel>
+                          <TextBlock Text="{Binding Name}" FontWeight="Bold" />
+                          <TextBlock Text="{Binding Type}" FontSize="10" Foreground="Gray" />
+                        </StackPanel>
+                      </Border>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
+              </Canvas>
+            </ScrollViewer>
+          </Grid>
+        </TabItem>
+
+        <!-- C# 依赖标签页 -->
+        <TabItem Header="C# 依赖">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- 依赖统计 -->
+            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                    Padding="12,8">
+              <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="{Binding CSharpDependencies.Count, StringFormat='总计: {0} 个包'}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ScanResult.Dependencies.DevDependencyCount, StringFormat='开发依赖: {0} 个'}" />
+              </StackPanel>
+            </Border>
+            
+            <!-- 依赖列表 -->
+            <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding CSharpDependencies}"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="包名" Binding="{Binding Name}" Width="*" />
+                <DataGridTextColumn Header="版本" Binding="{Binding Version}" Width="120" />
+                <DataGridTextColumn Header="来源" Binding="{Binding Source}" Width="100" />
+                <DataGridTextColumn Header="风险评分" Binding="{Binding RiskScore, StringFormat='{}{0:F0}'}" Width="80" />
+                <DataGridCheckBoxColumn Header="开发依赖" Binding="{Binding DevDependency}" Width="80" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+        </TabItem>
+
+        <!-- Node 依赖标签页 -->
+        <TabItem Header="Node 依赖">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- 依赖统计 -->
+            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                    Padding="12,8">
+              <StackPanel Orientation="Horizontal" Spacing="16">
+                <TextBlock Text="{Binding NodeDependencies.Count, StringFormat='总计: {0} 个包'}" FontWeight="SemiBold" />
+                <TextBlock Text="{Binding ScanResult.Dependencies.DevDependencyCount, StringFormat='开发依赖: {0} 个'}" />
+              </StackPanel>
+            </Border>
+            
+            <!-- 依赖列表 -->
+            <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding NodeDependencies}"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="包名" Binding="{Binding Name}" Width="*" />
+                <DataGridTextColumn Header="版本" Binding="{Binding Version}" Width="120" />
+                <DataGridTextColumn Header="来源" Binding="{Binding Source}" Width="100" />
+                <DataGridTextColumn Header="风险评分" Binding="{Binding RiskScore, StringFormat='{}{0:F0}'}" Width="80" />
+                <DataGridCheckBoxColumn Header="开发依赖" Binding="{Binding DevDependency}" Width="80" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+        </TabItem>
+
+        <!-- 运行信息标签页 -->
+        <TabItem Header="运行信息">
+          <ScrollViewer>
+            <StackPanel Spacing="16" Margin="16">
+              
+              <!-- 端口信息 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16">
+                <StackPanel>
+                  <TextBlock Text="端口候选" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <DataGrid ItemsSource="{Binding Ports}"
+                            IsReadOnly="True"
+                            GridLinesVisibility="Horizontal"
+                            HeadersVisibility="Column"
+                            MaxHeight="200">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="端口" Binding="{Binding Value}" Width="80" />
+                      <DataGridTextColumn Header="置信度" Binding="{Binding Confidence, StringFormat='{}{0:P0}'}" Width="80" />
+                      <DataGridTextColumn Header="来源" Binding="{Binding Source}" Width="120" />
+                      <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="*" />
+                      <DataGridTextColumn Header="可用性" Binding="{Binding IsAvailable}" Width="80" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </StackPanel>
+              </Border>
+
+              <!-- URL 信息 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16">
+                <StackPanel>
+                  <TextBlock Text="URL 候选" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <DataGrid ItemsSource="{Binding Urls}"
+                            IsReadOnly="True"
+                            GridLinesVisibility="Horizontal"
+                            HeadersVisibility="Column"
+                            MaxHeight="200">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="URL" Binding="{Binding Value}" Width="*" />
+                      <DataGridTextColumn Header="置信度" Binding="{Binding Confidence, StringFormat='{}{0:P0}'}" Width="80" />
+                      <DataGridTextColumn Header="来源" Binding="{Binding Source}" Width="120" />
+                      <DataGridTextColumn Header="备注" Binding="{Binding Notes}" Width="200" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </StackPanel>
+              </Border>
+
+              <!-- 启动命令 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding ScanResult.RunInfo.StartCommands.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                <StackPanel>
+                  <TextBlock Text="启动命令" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <ItemsControl ItemsSource="{Binding ScanResult.RunInfo.StartCommands}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                                CornerRadius="2" Padding="8,4" Margin="0,2">
+                          <TextBlock Text="{Binding}" FontFamily="Consolas" />
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+            </StackPanel>
+          </ScrollViewer>
+        </TabItem>
+
+        <!-- 日志与告警标签页 -->
+        <TabItem Header="日志">
+          <Grid>
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            
+            <!-- 日志工具栏 -->
+            <Border Grid.Row="0" Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                    Padding="12,8">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <TextBlock Text="日志级别:" VerticalAlignment="Center" />
+                <ComboBox SelectedIndex="0" Width="100">
+                  <ComboBoxItem Content="全部" />
+                  <ComboBoxItem Content="错误" />
+                  <ComboBoxItem Content="警告" />
+                  <ComboBoxItem Content="信息" />
+                </ComboBox>
+                <Button Content="清空日志" />
+                <Button Content="导出日志" />
+              </StackPanel>
+            </Border>
+            
+            <!-- 日志列表 -->
+            <DataGrid Grid.Row="1" 
+                      ItemsSource="{Binding Logs}"
+                      IsReadOnly="True"
+                      GridLinesVisibility="Horizontal"
+                      HeadersVisibility="Column">
+              <DataGrid.Columns>
+                <DataGridTextColumn Header="时间" Binding="{Binding Timestamp, StringFormat='{}{0:HH:mm:ss}'}" Width="80" />
+                <DataGridTextColumn Header="级别" Binding="{Binding Level}" Width="60" />
+                <DataGridTextColumn Header="来源" Binding="{Binding Source}" Width="120" />
+                <DataGridTextColumn Header="消息" Binding="{Binding Message}" Width="*" />
+              </DataGrid.Columns>
+            </DataGrid>
+          </Grid>
+        </TabItem>
+
+        <!-- AI 洞察标签页 -->
+        <TabItem Header="AI 洞察">
+          <Grid>
+            <ScrollViewer IsVisible="{Binding AiInsights, Converter={x:Static ObjectConverters.IsNotNull}}">
+              <StackPanel Spacing="16" Margin="16">
+                
+                <!-- 高层架构总结 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16">
+                <StackPanel>
+                  <TextBlock Text="架构总结" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  <TextBlock Text="{Binding AiInsights.HighLevelArchitecture}" 
+                             TextWrapping="Wrap" 
+                             LineHeight="20" />
+                </StackPanel>
+              </Border>
+
+              <!-- 模块洞察 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding AIModules.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                <StackPanel>
+                  <TextBlock Text="模块分析" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <ItemsControl ItemsSource="{Binding AIModules}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                                CornerRadius="2" Padding="12" Margin="0,4">
+                          <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                              <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                              <TextBlock Text="{Binding ComplexityScore, StringFormat='复杂度: {0:F0}'}" 
+                                         FontSize="10" 
+                                         Foreground="Gray" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Role}" 
+                                       TextWrapping="Wrap" 
+                                       Margin="0,0,0,4" />
+                            <ItemsControl ItemsSource="{Binding Suggestions}" 
+                                          IsVisible="{Binding Suggestions.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <TextBlock Text="{Binding, StringFormat='• {0}'}" 
+                                             TextWrapping="Wrap" 
+                                             FontSize="12" 
+                                             Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <!-- 运行建议 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding AiInsights.RunRecommendations, Converter={x:Static ObjectConverters.IsNotNull}}">
+                <StackPanel>
+                  <TextBlock Text="运行建议" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="推荐端口:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding AiInsights.RunRecommendations.PortsToUse, Converter={x:Static converters:ProjectSourceConverters.JoinIntegers}}" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="推荐 URL:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding AiInsights.RunRecommendations.UrlsToTry, Converter={x:Static converters:ProjectSourceConverters.JoinStrings}}" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="入口点:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding AiInsights.RunRecommendations.Entrypoints, Converter={x:Static converters:ProjectSourceConverters.JoinStrings}}" Margin="0,0,0,4" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              <!-- 潜在风险 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding AIRisks.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                <StackPanel>
+                  <TextBlock Text="潜在风险" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <ItemsControl ItemsSource="{Binding AIRisks}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate>
+                        <Border Background="{DynamicResource SystemControlBackgroundChromeMediumBrush}" 
+                                CornerRadius="2" Padding="12" Margin="0,4">
+                          <StackPanel>
+                            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,4">
+                              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+                              <Border Background="{Binding Severity, Converter={x:Static converters:ProjectSourceConverters.SeverityToColor}}" 
+                                      CornerRadius="2" Padding="4,2">
+                                <TextBlock Text="{Binding Severity}" 
+                                           FontSize="10" 
+                                           Foreground="White" />
+                              </Border>
+                              <TextBlock Text="{Binding Confidence, StringFormat='置信度: {0:P0}'}" 
+                                         FontSize="10" 
+                                         Foreground="Gray" />
+                            </StackPanel>
+                            <TextBlock Text="{Binding Description}" 
+                                       TextWrapping="Wrap" 
+                                       Margin="0,0,0,4" />
+                            <ItemsControl ItemsSource="{Binding Recommendations}" 
+                                          IsVisible="{Binding Recommendations.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                              <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                  <TextBlock Text="{Binding, StringFormat='💡 {0}'}" 
+                                             TextWrapping="Wrap" 
+                                             FontSize="12" 
+                                             Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </DataTemplate>
+                              </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                          </StackPanel>
+                        </Border>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </Border>
+
+              <!-- 依赖建议 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16"
+                      IsVisible="{Binding AIAdvice.Count, Converter={x:Static converters:ProjectSourceConverters.IsGreaterThanZero}}">
+                <StackPanel>
+                  <TextBlock Text="依赖建议" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <DataGrid ItemsSource="{Binding AIAdvice}"
+                            IsReadOnly="True"
+                            GridLinesVisibility="Horizontal"
+                            HeadersVisibility="Column"
+                            MaxHeight="300">
+                    <DataGrid.Columns>
+                      <DataGridTextColumn Header="包名" Binding="{Binding Package}" Width="*" />
+                      <DataGridTextColumn Header="当前版本" Binding="{Binding Current}" Width="100" />
+                      <DataGridTextColumn Header="建议版本" Binding="{Binding Suggested}" Width="100" />
+                      <DataGridTextColumn Header="类型" Binding="{Binding Type}" Width="80" />
+                      <DataGridTextColumn Header="原因" Binding="{Binding Reason}" Width="200" />
+                    </DataGrid.Columns>
+                  </DataGrid>
+                </StackPanel>
+              </Border>
+
+              <!-- 置信度信息 -->
+              <Border Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" 
+                      CornerRadius="4" Padding="16">
+                <StackPanel>
+                  <TextBlock Text="分析质量" FontWeight="Bold" FontSize="16" Margin="0,0,0,12" />
+                  
+                  <Grid>
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                      <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    
+                    <TextBlock Grid.Row="0" Grid.Column="0" Text="总体置信度:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <ProgressBar Grid.Row="0" Grid.Column="1" Value="{Binding AiInsights.ConfidenceScores.Overall}" 
+                                 Maximum="1" Height="16" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="1" Grid.Column="0" Text="数据完整性:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <ProgressBar Grid.Row="1" Grid.Column="1" Value="{Binding AiInsights.ConfidenceScores.DataCompleteness}" 
+                                 Maximum="1" Height="16" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="2" Grid.Column="0" Text="分析深度:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <ProgressBar Grid.Row="2" Grid.Column="1" Value="{Binding AiInsights.ConfidenceScores.AnalysisDepth}" 
+                                 Maximum="1" Height="16" Margin="0,0,0,4" />
+                    
+                    <TextBlock Grid.Row="3" Grid.Column="0" Text="推理说明:" FontWeight="SemiBold" Margin="0,0,12,4" />
+                    <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding AiInsights.ConfidenceScores.Reasoning}" 
+                               TextWrapping="Wrap" Margin="0,0,0,4" />
+                  </Grid>
+                </StackPanel>
+              </Border>
+
+              </StackPanel>
+            </ScrollViewer>
+            
+            <!-- AI 洞察未生成时的提示 -->
+            <StackPanel IsVisible="{Binding AiInsights, Converter={x:Static ObjectConverters.IsNull}}"
+                        HorizontalAlignment="Center" 
+                        VerticalAlignment="Center" 
+                        Spacing="16">
+              <TextBlock Text="🤖" FontSize="48" HorizontalAlignment="Center" />
+              <TextBlock Text="AI 洞察尚未生成" 
+                         FontSize="18" 
+                         FontWeight="SemiBold" 
+                         HorizontalAlignment="Center" />
+              <TextBlock Text="请先完成项目扫描，然后点击'生成 AI 洞察'按钮" 
+                         HorizontalAlignment="Center" 
+                         Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+              <Button Content="生成 AI 洞察" 
+                      Command="{Binding GenerateAIInsightsCommand}"
+                      IsEnabled="{Binding CanGenerateAI}"
+                      Classes="accent" 
+                      HorizontalAlignment="Center" />
+            </StackPanel>
+          </Grid>
+        </TabItem>
+
+      </TabControl>
+    </Grid>
+  </Grid>
+</UserControl>

@@ -31,52 +31,20 @@ namespace ProjectIgnite.Services
         public async IAsyncEnumerable<string> GenerateTextWithOpenAiStreamAsync(List<ChatMessage> chatMessages,
             [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
-            var chatClient = new OpenAI.Chat.ChatClient("openai/gpt-oss-20b",
-                new ApiKeyCredential("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"),
-                new OpenAIClientOptions()
-                {
-                    Endpoint = new Uri("https://openrouter.ai/api/v1")
-                }).AsIChatClient();
-
-            IChatClient client =
-                new ChatClientBuilder(chatClient)
-                    .UseFunctionInvocation()
-                    .Build();
-
-
-            // System prompt to provide context.
-            var response = client.GetStreamingResponseAsync(chatMessages, cancellationToken: cancellationToken);
-
-            await foreach (var message in response)
-            {
-                if (string.IsNullOrWhiteSpace(message.Text))
-                    continue;
-
-                yield return message.Text ?? "";
-            }
+            // TODO: 实现OpenAI流式响应
+            // 这里需要配置真实的AI服务客户端
+            yield return "AI服务暂未配置，请在ServiceLocator中配置IChatClient";
+            await Task.CompletedTask;
         }
 
 
         private async Task<string> GenerateTextWithOpenAiAsync(List<ChatMessage> chatMessages,
             CancellationToken cancellationToken = default)
         {
-            var chatClient = new ChatClient("openai/gpt-oss-20b",
-                new ApiKeyCredential("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"),
-                new OpenAIClientOptions()
-                {
-                    Endpoint = new Uri("https://openrouter.ai/api/v1")
-                }).AsIChatClient();
-
-            IChatClient client =
-                new ChatClientBuilder(chatClient)
-                    .UseFunctionInvocation()
-                    .Build();
-
-            // System prompt to provide context.
-            var response = await client.GetResponseAsync(chatMessages, cancellationToken: cancellationToken);
-
-
-            return response.Text ?? "";
+            // TODO: 实现OpenAI文本生成
+            // 这里需要配置真实的AI服务客户端
+            await Task.CompletedTask;
+            return "AI服务暂未配置，请在ServiceLocator中配置IChatClient";
         }
 
 

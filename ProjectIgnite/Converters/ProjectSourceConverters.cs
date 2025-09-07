@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Avalonia.Data.Converters;
 using Avalonia.Media;
+using ProjectIgnite.DTOs;
 
 namespace ProjectIgnite.Converters
 {
@@ -286,6 +289,97 @@ namespace ProjectIgnite.Converters
         public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
         {
             throw new NotImplementedException();
+        }
+    }
+
+    /// <summary>
+    /// 项目源相关的静态转换器集合
+    /// </summary>
+    public static class ProjectSourceConverters
+    {
+        /// <summary>
+        /// 判断文件节点类型是否为目录
+        /// </summary>
+        public static readonly IValueConverter IsDirectory = new FuncValueConverter<FileNodeType, bool>(
+            type => type == FileNodeType.Directory);
+
+        /// <summary>
+        /// 判断文件节点类型是否为文件
+        /// </summary>
+        public static readonly IValueConverter IsFile = new FuncValueConverter<FileNodeType, bool>(
+            type => type == FileNodeType.File);
+
+        /// <summary>
+        /// 从完整路径中提取文件名
+        /// </summary>
+        public static readonly IValueConverter GetFileName = new FuncValueConverter<string, string>(
+            path => string.IsNullOrEmpty(path) ? "" : System.IO.Path.GetFileName(path));
+
+        /// <summary>
+        /// 将字符串列表连接为单个字符串
+        /// </summary>
+        public static readonly IValueConverter JoinStrings = new FuncValueConverter<IEnumerable<string>, string>(
+            strings => strings == null ? "" : string.Join(", ", strings));
+
+        /// <summary>
+        /// 将整数列表连接为单个字符串
+        /// </summary>
+        public static readonly IValueConverter JoinIntegers = new FuncValueConverter<IEnumerable<int>, string>(
+            integers => integers == null ? "" : string.Join(", ", integers));
+
+        /// <summary>
+        /// 判断数值是否大于零
+        /// </summary>
+        public static readonly IValueConverter IsGreaterThanZero = new FuncValueConverter<int, bool>(
+            value => value > 0);
+
+        /// <summary>
+        /// 将布尔值转换为状态颜色
+        /// </summary>
+        public static readonly IValueConverter BoolToStatusColor = new FuncValueConverter<bool, IBrush>(
+            isAvailable => isAvailable ? Brushes.Green : Brushes.Red);
+
+        /// <summary>
+        /// 将严重程度转换为颜色
+        /// </summary>
+        public static readonly IValueConverter SeverityToColor = new FuncValueConverter<string, IBrush>(severity =>
+        {
+            return severity?.ToLower() switch
+            {
+                "high" or "critical" => Brushes.Red,
+                "medium" or "warning" => Brushes.Orange,
+                "low" or "info" => Brushes.Blue,
+                _ => Brushes.Gray
+            };
+        });
+    }
+
+    /// <summary>
+    /// 通用函数转换器
+    /// </summary>
+    /// <typeparam name="TIn">输入类型</typeparam>
+    /// <typeparam name="TOut">输出类型</typeparam>
+    public class FuncValueConverter<TIn, TOut> : IValueConverter
+    {
+        private readonly Func<TIn, TOut> _converter;
+
+        public FuncValueConverter(Func<TIn, TOut> converter)
+        {
+            _converter = converter ?? throw new ArgumentNullException(nameof(converter));
+        }
+
+        public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            if (value is TIn input)
+            {
+                return _converter(input);
+            }
+            return default(TOut);
+        }
+
+        public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
+        {
+            throw new NotSupportedException("ConvertBack is not supported.");
         }
     }
 }

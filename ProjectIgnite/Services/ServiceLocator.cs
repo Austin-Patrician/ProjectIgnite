@@ -1,11 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using ProjectIgnite.Data;
 using ProjectIgnite.Repositories;
 using ProjectIgnite.ViewModels;
 // 移除不存在的 Interfaces 命名空间引用
 using Microsoft.Extensions.Logging;
 using System;
+using System.ClientModel;
+using OpenAI;
 
 namespace ProjectIgnite.Services
 {
@@ -50,6 +53,30 @@ namespace ProjectIgnite.Services
             services.AddSingleton<IPortManagementService, PortManagementService>();
             services.AddSingleton<IProcessManagementService, ProcessManagementService>();
             
+            // 注册AI驱动项目分析服务
+            services.AddSingleton<ILanguageAnalyzer, CSharpLanguageAnalyzer>();
+            services.AddSingleton<ILanguageAnalyzer, NodeLanguageAnalyzer>();
+            services.AddSingleton<IContentSummarizer, ContentSummarizer>();
+            services.AddSingleton<IAIInsightsService, AIInsightsService>();
+            
+            // 注册AI客户端（需要配置具体的AI服务提供商）
+            // 这里使用一个占位符实现，实际使用时需要配置真实的AI服务
+            services.AddSingleton<IChatClient>(provider =>
+            {
+                var chatClient = new OpenAI.Chat.ChatClient("openai/gpt-4.1",
+                    new ApiKeyCredential("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"),
+                    new OpenAIClientOptions()
+                    {
+                        Endpoint = new Uri("https://openrouter.ai/api/v1")
+                    }).AsIChatClient();
+
+                IChatClient client =
+                    new ChatClientBuilder(chatClient)
+                        .UseFunctionInvocation()
+                        .Build();
+                return client;
+            });
+            
             // 注册日志服务
             services.AddLogging(builder => builder.AddConsole());
 
@@ -59,6 +86,7 @@ namespace ProjectIgnite.Services
             services.AddTransient<AddProjectDialogViewModel>();
             services.AddTransient<CloneProgressViewModel>();
             services.AddTransient<ProjectLauncherViewModel>();
+            services.AddSingleton<ProjectAnalyzerViewModel>();
 
             _serviceProvider = services.BuildServiceProvider();
         }

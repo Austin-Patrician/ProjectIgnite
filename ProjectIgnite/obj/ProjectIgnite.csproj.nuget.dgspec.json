@@ -1,35 +1,26 @@
 {
   "format": 1,
   "restore": {
-    "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ProjectIgnite.csproj": {}
+    "/Users/aa123456/code/net/ProjectIgnite/ProjectIgnite/ProjectIgnite.csproj": {}
   },
   "projects": {
-    "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ProjectIgnite.csproj": {
+    "/Users/aa123456/code/net/ProjectIgnite/ProjectIgnite/ProjectIgnite.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ProjectIgnite.csproj",
+        "projectUniqueName": "/Users/aa123456/code/net/ProjectIgnite/ProjectIgnite/ProjectIgnite.csproj",
         "projectName": "ProjectIgnite",
-        "projectPath": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\ProjectIgnite.csproj",
-        "packagesPath": "C:\\Users\\Austin_Zhang\\.nuget\\packages\\",
-        "outputPath": "F:\\code\\Austin\\ProjectIgnite\\ProjectIgnite\\obj\\",
+        "projectPath": "/Users/aa123456/code/net/ProjectIgnite/ProjectIgnite/ProjectIgnite.csproj",
+        "packagesPath": "/Users/aa123456/.nuget/packages/",
+        "outputPath": "/Users/aa123456/code/net/ProjectIgnite/ProjectIgnite/obj/",
         "projectStyle": "PackageReference",
-        "fallbackFolders": [
-          "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
-        ],
         "configFilePaths": [
-          "C:\\Users\\Austin_Zhang\\AppData\\Roaming\\NuGet\\NuGet.Config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
-          "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
+          "/Users/aa123456/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net8.0"
         ],
         "sources": {
-          "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
-          "https://api.nuget.org/v3/index.json": {},
-          "https://api.nuget.org/v3/index.json": {},
-          "https://devops.rspinternal.com/repository/nuget-group/index.json": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0": {
@@ -47,7 +38,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.200"
       },
       "frameworks": {
         "net8.0": {
@@ -76,10 +67,6 @@
             "Avalonia.Themes.Fluent": {
               "target": "Package",
               "version": "[11.2.7, )"
-            },
-            "CefGlue.Avalonia": {
-              "target": "Package",
-              "version": "[120.6099.211, )"
             },
             "ColorTextBlock.Avalonia": {
               "target": "Package",
@@ -151,12 +138,54 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
+          "downloadDependencies": [
+            {
+              "name": "Microsoft.AspNetCore.App.Ref",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.osx-arm64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.AspNetCore.App.Runtime.osx-x64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.osx-arm64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Host.osx-x64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Ref",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.osx-arm64",
+              "version": "[8.0.14, 8.0.14]"
+            },
+            {
+              "name": "Microsoft.NETCore.App.Runtime.osx-x64",
+              "version": "[8.0.14, 8.0.14]"
+            }
+          ],
           "frameworkReferences": {
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.304/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.202/PortableRuntimeIdentifierGraph.json"
+        }
+      },
+      "runtimes": {
+        "osx-arm64": {
+          "#import": []
+        },
+        "osx-x64": {
+          "#import": []
         }
       }
     }
